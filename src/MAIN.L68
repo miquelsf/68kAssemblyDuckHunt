@@ -1,0 +1,2064 @@
+00001FE4 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 03/03/2025 10:26:18
+
+00000000                             1  ; ==============================================================================
+00000000                             2  ; TITLE       : ASSEMBLY DUCK HUNT
+00000000                             3  ; AUTHORS     : Aaron Tudor and Miquel Sanso
+00000000                             4  ; CREATION    : 9/11/2024
+00000000                             5  ; ==============================================================================
+00000000                             6  
+00001000                             7              ORG     $1000               ; Start program at memory location $1000
+00001000                             8  
+00001000                             9              INCLUDE "CONST.X68"         ; Include constants used in the program
+00001000                            10  ; ==============================================================================
+00001000                            11  ; GAME CONSTANTS
+00001000                            12  ; ==============================================================================
+00001000                            13  
+00001000                            14  ; --- DUCK RELATED CONSTANTS ----------------------------------------------------
+00001000                            15  
+00001000  =0000001E                 16  DCKRAD      EQU     30                       ; Duck radius
+00001000  =00000000                 17  DCKPCOL     EQU     $00000000                ; Duck contour color
+00001000  =00AAAAAA                 18  DCKFCOL     EQU     $00AAAAAA                ; Duck fill color
+00001000  =00000002                 19  DCKSPEED    EQU     2                        ; Magnitude of the initial duck speed
+00001000= 0000 005B 00B6 0...       20  BINITVEC    DC.W    0, 91, 182, 273, 364, 455, 640  ; Duck initial direction vector
+0000100E= 33 43 53 64 64 64 64      21  BVECVELX    DC.B    51, 67, 83, 100, 100, 100, 100  ; Duck x direction velocity vectors
+00001015= 64 64 64 64 53 43 33      22  BVECVELY    DC.B    100, 100, 100, 100, 83, 67, 51  ; Duck y direction velocity vectors
+0000101C                            23  
+0000101C                            24  ; --- BACKGROUND RELATED CONSTANTS ---------------------------------------------
+0000101C                            25  
+0000101C  =00000280                 26  BCKWIDTH    EQU     640                     ; Sky width
+0000101C  =000001E0                 27  BCKHEIGH    EQU     480                     ; Sky height
+0000101C  =00000140                 28  BCKPOSX     EQU     320                     ; Sky x position
+0000101C  =000000F0                 29  BCKPOSY     EQU     240                     ; Sky y coordinate
+0000101C  =00FFAD63                 30  BCKPCOL     EQU     $00FFAD63               ; Sky contour color
+0000101C  =00FFAD63                 31  BCKFCOL     EQU     $00FFAD63               ; Sky fill color
+0000101C                            32  
+0000101C  =00000280                 33  GRSWIDTH    EQU     640                     ; Grass width
+0000101C  =00000050                 34  GRSHEIGH    EQU     80                      ; Grass height
+0000101C  =00000000                 35  GRSPOSX     EQU     0                       ; Grass x position
+0000101C  =00000190                 36  GRSPOSY     EQU     400                     ; Grass y position
+0000101C  =0000D78D                 37  GRSPCOL     EQU     $0000D78D               ; Grass contour color
+0000101C  =0000D78D                 38  GRSFCOL     EQU     $0000D78D               ; Grass fill color
+0000101C                            39  
+0000101C                            40  ; --- PLAYER RELATED CONSTANTS -------------------------------------------------
+0000101C                            41  
+0000101C  =00000014                 42  PLYWIDTH    EQU     20                      ; Player width
+0000101C  =00000014                 43  PLYHEIGH    EQU     20                      ; Player height
+0000101C  =00000140                 44  PLYPOSX     EQU     320                     ; Player x position
+0000101C                            45  PLYPOSY     DS.W    1                       ; Player y coordinate
+0000101E  =004444FF                 46  PLYPCOL     EQU     $004444FF               ; Player contour color
+0000101E  =006565FF                 47  PLYFCOL     EQU     $006565FF               ; Player fill color
+0000101E                            48  
+0000101E                            49  ; --- SCOREBOARD RELATED CONSTANTS ---------------------------------------------
+0000101E                            50  
+0000101E  =00000000                 51  SCOFCOL     EQU     $00000000               ; Text background color
+0000101E  =00003E1D                 52  SCOLINE1    EQU     $3E1D                   ; First text line coordinates
+0000101E  =0000091D                 53  SCOLINE2    EQU     $091D                   ; Second text line coordinates
+0000101E  =0000231D                 54  SCOLINE3    EQU     $231D                   ; Third text line coordinates
+0000101E                            55  
+0000101E                            56  ; --- VERTICAL RECTANGLE -------------------------------------------------------
+0000101E                            57  
+0000101E  =00000005                 58  RVTWIDTH    EQU     5  
+0000101E  =0000001E                 59  RVTHEIGH    EQU     30
+0000101E  =000000FF                 60  RVTPCOL     EQU     $000000FF              ; Rectangle contour color
+0000101E  =000000FF                 61  RVTFCOL     EQU     $000000FF              ; Rectangle fill color
+0000101E                            62  
+0000101E                            63  ; --- HORIZONTAL RECTANGLE -----------------------------------------------------
+0000101E                            64  
+0000101E  =0000001E                 65  RHZWIDTH    EQU     30
+0000101E  =00000005                 66  RHZHEIGH    EQU     5
+0000101E  =000000FF                 67  RHZPCOL     EQU     $000000FF              ; Rectangle contour color
+0000101E  =000000FF                 68  RHZFCOL     EQU     $000000FF              ; Rectangle fill color
+0000101E                            69  
+0000101E                            70  ; --- HITBOX RELATED CONSTANTS -------------------------------------------------
+0000101E                            71  
+0000101E  =0000001E                 72  BOXWIDTH    EQU     30                     ; Hitbox width
+0000101E  =0000001E                 73  BOXHEIGH    EQU     30                     ; Hitbox height
+0000101E  =00FF1100                 74  BOXPCOL     EQU     $00FF1100              ; Hitbox contour
+0000101E                            75  
+0000101E                            76  ; --- SCORE RELATED CONSTANTS --------------------------------------------------
+0000101E                            77  
+0000101E  =00000007                 78  BULLETN     EQU     7                      ; Number of bullets per round
+0000101E                            79  
+0000101E                            80  ; --- AUDIO RELATED CONSTANTS --------------------------------------------------
+0000101E                            81  
+0000101E  =00000000                 82  SNDQUAK     EQU    0                       ; Duck sound
+0000101E  =00000001                 83  SNDSHOT     EQU    1                       ; Shot sound 
+0000101E  =00000002                 84  SNDLOSE     EQU    2                       ; Game over sound
+0000101E                            85  
+0000101E                            86  ; --- TEXT RELATED CONSTANTS ---------------------------------------------------
+0000101E                            87  
+0000101E  =00000008                 88  ULTCHRWD    EQU     8                       ; Character size
+0000101E                            89  
+0000101E                            90  ; --- FILE RELATED CONSTANTS ---------------------------------------------------
+0000101E                            91  
+0000101E                            92  BUFFER      DS.B    20                      ; Buffer
+00001032= 5265 6769 7374 7...       93  FILENM      DC.W    'Registro.txt', 0       ; File name
+00001040                            94  
+00001040                            95  INVSCS      DS.B    4                       ; Score string (Inverted)
+00001044                            96  SCSTR       DS.B    4                       ; Original score string
+00001048                            97  
+00001048                            98  ; --- SPRITES RELATED CONSTANTS ------------------------------------------------
+00001048                            99  
+00001048  =00000004                100  RSCLFCTR    EQU     4                       ; Rescale factor
+00001048                           101  
+00001048                           102  ; --- STATE RELATED CONSTANTS --------------------------------------------------
+00001048                           103  
+00001048  =FFFFFFFF                104  STANONE     EQU     -1                      ; Non-existent state number
+00001048  =FFFFFFFF                105  -------------------- end include --------------------
+00001048                           106              INCLUDE "SYSCONST.X68"      ; Include system-related constants
+00001048                           107  ; ==============================================================================
+00001048                           108  ; SYSTEM CONSTANTS
+00001048                           109  ; ==============================================================================
+00001048                           110  
+00001048                           111  ; --- SCREEN RELATED CONSTANTS -------------------------------------------------
+00001048                           112  
+00001048  =00000280                113  SCRWIDTH    EQU     640                      ; SCREEN WIDTH
+00001048  =000001E0                114  SCRHEIGH    EQU     480                      ; SCREEN HEIGHT
+00001048  =0000003C                115  SCRFPS      EQU     60                       ; SCREEN FRAME PER SECOND
+00001048                           116  
+00001048                           117  ; --- KEYCODES -----------------------------------------------------------------
+00001048                           118  
+00001048  =00000020                119  KBDSTART    EQU     ' '
+00001048  =00000050                120  KBDSHOOT    EQU     'P'
+00001048  =00000051                121  KBDQ        EQU     'Q'
+00001048  =00000057                122  KBDW        EQU     'W'
+00001048  =00000041                123  KBDA        EQU     'A'
+00001048  =00000053                124  KBDS        EQU     'S'
+00001048  =00000044                125  KBDD        EQU     'D'
+00001048  =00000045                126  KBDE        EQU     'E'
+00001048                           127  
+00001048                           128  ; --- TRAP NUMBERS -------------------------------------------------------------
+00001048                           129  
+00001048  =00000000                130  SCRUPTN     EQU     0                       ; SCREEN UPDATE TRAP NUMBER
+00001048  =00000001                131  KBDUPTN     EQU     1                       ; KEYBOARD UPDATE TRAP NUMBER
+00001048  =00000002                132  SNDPLTN     EQU     2                       ; SOUND PLAY TRAP NUMBER
+00001048                           133  
+00001048                           134  ; --- INTERRUPT NUMBERS --------------------------------------------------------
+00001048                           135  
+00001048  =00000001                136  SCRINTN     EQU     1                       ; Screen timed interrupt number
+00001048  =00000001                137  -------------------- end include --------------------
+00001048                           138              INCLUDE "SYSTEM.X68"        ; Include system functions
+00001048                           139  ; ==============================================================================
+00001048                           140  ; SYSTEM
+00001048                           141  ; ==============================================================================
+00001048                           142  
+00001048                           143  ; ------------------------------------------------------------------------------
+00001048                           144  SYSINIT
+00001048                           145  ; SYSTEM INITIALIZATION ROUTINE
+00001048                           146  ; Initializes key system functions such as screen plotting, keyboard updates, 
+00001048                           147  ; sound playback, and timed interrupts.
+00001048                           148  ; INPUT    : NONE
+00001048                           149  ; OUTPUT   : NONE
+00001048                           150  ; MODIFIES : NONE
+00001048                           151  ; ------------------------------------------------------------------------------
+00001048  21FC 00001144 0080       152              MOVE.L  #SCRPLOT,($80+SCRUPTN*4)    ; Set screen update routine in trap vector
+00001050  21FC 0000117A 0084       153              MOVE.L  #KBDUPD,($80+KBDUPTN*4)     ; Set keyboard update routine in trap vector
+00001058  21FC 000010EE 0088       154              MOVE.L  #SNDPLAY,($80+SNDPLTN*4)    ; Set sound playback routine in trap vector
+00001060  21FC 0000115E 0064       155              MOVE.L  #SCRTIM,($60+SCRINTN*4)     ; Set timed interrupt routine in vector table
+00001068                           156  
+00001068  4EB9 00001100            157              JSR     SCRINIT                     ; Initialize screen settings
+0000106E  4EB9 0000116C            158              JSR     KBDINIT                     ; Initialize keyboard settings
+00001074                           159  
+00001074  40E7                     160              MOVE.W  SR,-(A7)                    ; Push status register onto stack
+00001076  0257 D8FF                161              ANDI.W  #$D8FF,(A7)                 ; Configure interrupt settings
+0000107A                           162  
+0000107A  4E73                     163              RTE                                 ; Return from exception (restore program state)
+0000107C                           164  
+0000107C                           165  ; ------------------------------------------------------------------------------
+0000107C                           166  SNDINIT
+0000107C                           167  ; INITIALIZE SOUND SYSTEM
+0000107C                           168  ; Loads sound files into memory and prepares them for playback.
+0000107C                           169  ; INPUT    : NONE
+0000107C                           170  ; OUTPUT   : NONE
+0000107C                           171  ; MODIFIES : NONE
+0000107C                           172  ; ------------------------------------------------------------------------------
+0000107C  48E7 C0C0                173              MOVEM.L D0-D1/A0-A1,-(A7)           ; Save registers d0-d1 and a0-a1 on stack
+00001080                           174  
+00001080  4201                     175              CLR.B   D1                          ; Clear sound index
+00001082  41F9 000010DE            176              LEA     .SNDLIST,A0                 ; Load address of sound list into a0
+00001088  2018                     177  .LOOP       MOVE.L  (A0)+,D0                  ; Load next sound file pointer
+0000108A  6700 000E                178              BEQ     .DONE                       ; Exit loop if end of list is reached
+0000108E  2240                     179              MOVE.L  D0,A1                       ; Load sound file path into a1
+00001090  103C 0047                180              MOVE.B  #71,D0                      ; Set sound load command
+00001094  4E4F                     181              TRAP    #15                         ; System call to load sound
+00001096  5201                     182              ADDQ.B  #1,D1                       ; Increment sound index
+00001098  60EE                     183              BRA     .LOOP                       ; Repeat for the next sound file
+0000109A                           184  
+0000109A  4CDF 0303                185  .DONE       MOVEM.L (A7)+,D0-D1/A0-A1           ; Restore registers
+0000109E  4E75                     186              RTS                                 ; Return from subroutine
+000010A0                           187  
+000010A0= 46 49 4C 45 53 2F ...    188  .SNDQUAK    DC.B    'FILES/SND/quack.wav',0           ; Sound file: duck quack
+000010B4= 46 49 4C 45 53 2F ...    189  .SNDSHOT    DC.B    'FILES/SND/gunshot.wav',0         ; Sound file: gunshot
+000010CA= 46 49 4C 45 53 2F ...    190  .SNDLOSE    DC.B    'FILES/SND/lose.wav',0            ; Sound file: game over sound
+000010DE= 000010A0 000010B4 ...    191  .SNDLIST    DC.L    .SNDQUAK,.SNDSHOT,.SNDLOSE,0     ; List of sound files (null-terminated)
+000010EE                           192  
+000010EE                           193  ; ------------------------------------------------------------------------------
+000010EE                           194  SNDPLAY
+000010EE                           195  ; PLAY SOUND ROUTINE
+000010EE                           196  ; Plays a sound based on the index in register D7.
+000010EE                           197  ; INPUT    : D7 (Sound index)
+000010EE                           198  ; OUTPUT   : NONE
+000010EE                           199  ; MODIFIES : NONE
+000010EE                           200  ; ------------------------------------------------------------------------------
+000010EE  48A7 C000                201              MOVEM.W D0-D1,-(A7)                 ; Save registers d0-d1 on stack
+000010F2  103C 0048                202              MOVE.B  #72,D0                      ; Set sound play command
+000010F6  1207                     203              MOVE.B  D7,D1                       ; Load sound index into d1
+000010F8  4E4F                     204              TRAP    #15                         ; System call to play sound
+000010FA  4C9F 0003                205              MOVEM.W (A7)+,D0-D1                 ; Restore registers d0-d1
+000010FE  4E73                     206              RTE                                 ; Return from exception
+00001100                           207  
+00001100                           208  ; ------------------------------------------------------------------------------
+00001100                           209  SCRINIT
+00001100                           210  ; INITIALIZE SCREEN
+00001100                           211  ; Sets the screen resolution, clears the screen, enables double buffering,
+00001100                           212  ; and configures timed interrupts for synchronization.
+00001100                           213  ; INPUT    : NONE
+00001100                           214  ; OUTPUT   : NONE
+00001100                           215  ; MODIFIES : NONE
+00001100                           216  ; ------------------------------------------------------------------------------
+00001100  48E7 C000                217              MOVEM.L D0-D1,-(A7)                 ; Save registers d0-d1 on stack
+00001104                           218  
+00001104                           219              ; Set screen resolution
+00001104  103C 0021                220              MOVE.B  #33,D0                      ; Set resolution command
+00001108  223C 028001E0            221              MOVE.L  #SCRWIDTH<<16|SCRHEIGH,D1   ; Set width and height in d1
+0000110E  4E4F                     222              TRAP    #15                         ; System call to configure resolution
+00001110                           223              
+00001110                           224              ; Set windowed mode
+00001110  7201                     225              MOVE.L  #1,D1                       ; Windowed mode setting
+00001112  4E4F                     226              TRAP    #15                         ; System call to configure mode
+00001114                           227              
+00001114                           228              ; Clear screen
+00001114  103C 000B                229              MOVE.B  #11,D0                      ; Clear screen command
+00001118  323C FF00                230              MOVE.W  #$FF00,D1                   ; Fill screen with black
+0000111C  4E4F                     231              TRAP    #15                         ; System call to clear screen
+0000111E                           232  
+0000111E                           233              ; Enable double buffering
+0000111E  103C 005C                234              MOVE.B  #92,D0                      ; Enable double buffer command
+00001122  123C 0011                235              MOVE.B  #17,D1                      ; Enable setting value
+00001126  4E4F                     236              TRAP    #15                         ; System call to enable buffering
+00001128                           237  
+00001128                           238              ; Enable timed interrupt
+00001128  103C 0020                239              MOVE.B  #32,D0                      ; Enable interrupt command
+0000112C  123C 0006                240              MOVE.B  #6,D1                       ; Timer interrupt type
+00001130  143C 0081                241              MOVE.B  #$80|SCRINTN,D2             ; Interrupt priority and number in d2
+00001134  7610                     242              MOVE.L  #1000/SCRFPS,D3             ; Set timer interval based on frames per second
+00001136  4E4F                     243              TRAP    #15                         ; System call to configure interrupt
+00001138                           244  
+00001138                           245              ; Clear interrupt counter
+00001138  4279 0000234C            246              CLR.W   (SCRINTCT)                  ; Reset screen interrupt counter
+0000113E                           247  
+0000113E  4CDF 0003                248              MOVEM.L (A7)+,D0-D1                 ; Restore registers d0-d1
+00001142  4E75                     249              RTS                                 ; Return from subroutine
+00001144                           250  
+00001144                           251  ; ------------------------------------------------------------------------------
+00001144                           252  SCRPLOT
+00001144                           253  ; SCREEN PLOTTING ROUTINE
+00001144                           254  ; Updates the display using double buffering and clears hidden buffers.
+00001144                           255  ; INPUT    : NONE
+00001144                           256  ; OUTPUT   : NONE
+00001144                           257  ; MODIFIES : NONE
+00001144                           258  ; ------------------------------------------------------------------------------
+00001144  48A7 C000                259              MOVEM.W D0-D1,-(A7)                 ; Save registers d0-d1 on stack
+00001148                           260  
+00001148                           261              ; Switch display buffers
+00001148  103C 005E                262              MOVE.B  #94,D0                      ; Command to switch display buffer
+0000114C  4E4F                     263              TRAP    #15                         ; System call to switch buffers
+0000114E                           264  
+0000114E                           265              ; Clear hidden buffer
+0000114E  103C 000B                266              MOVE.B  #11,D0                      ; Clear buffer command
+00001152  323C FF00                267              MOVE.W  #$FF00,D1                   ; Fill with black
+00001156  4E4F                     268              TRAP    #15                         ; System call to clear buffer
+00001158                           269  
+00001158  4C9F 0003                270              MOVEM.W (A7)+,D0-D1                 ; Restore registers d0-d1
+0000115C  4E73                     271              RTE                                 ; Return from exception
+0000115E                           272  
+0000115E                           273  ; ------------------------------------------------------------------------------
+0000115E                           274  SCRTIM
+0000115E                           275  ; TIMED INTERRUPT SERVICE ROUTINE
+0000115E                           276  ; Increments the screen interrupt counter for synchronization.
+0000115E                           277  ; INPUT    : NONE
+0000115E                           278  ; OUTPUT   : NONE
+0000115E                           279  ; MODIFIES : Screen interrupt counter (SCRINTCT) and cycle counter (SCRCYCCT)
+0000115E                           280  ; ------------------------------------------------------------------------------
+0000115E  5239 0000234C            281              ADDQ.B  #1,(SCRINTCT)               ; Increment screen interrupt counter
+00001164  5239 0000234D            282              ADDQ.B  #1,(SCRCYCCT)               ; Increment cycle counter
+0000116A  4E73                     283              RTE                                 ; Return from exception
+0000116C                           284  
+0000116C                           285  ; ------------------------------------------------------------------------------
+0000116C                           286  KBDINIT
+0000116C                           287  ; INITIALIZE KEYBOARD
+0000116C                           288  ; Clears keyboard values and edge triggers.
+0000116C                           289  ; INPUT    : NONE
+0000116C                           290  ; OUTPUT   : NONE
+0000116C                           291  ; MODIFIES : Keyboard values (KBDVAL) and edge triggers (KBDEDGE)
+0000116C                           292  ; ------------------------------------------------------------------------------
+0000116C  4239 0000234A            293              CLR.B   (KBDVAL)                    ; Clear current keyboard values
+00001172  4239 0000234B            294              CLR.B   (KBDEDGE)                   ; Clear keyboard edge triggers
+00001178  4E75                     295              RTS                                 ; Return from subroutine
+0000117A                           296  
+0000117A                           297  ; ------------------------------------------------------------------------------
+0000117A                           298  KBDUPD
+0000117A                           299  ; UPDATE KEYBOARD INFORMATION
+0000117A                           300  ; Reads the current keyboard state and calculates edge-triggered inputs.
+0000117A                           301  ; INPUT    : NONE
+0000117A                           302  ; OUTPUT   : Updates KBDVAL and KBDEDGE
+0000117A                           303  ; MODIFIES : NONE
+0000117A                           304  ; ------------------------------------------------------------------------------
+0000117A  48A7 F000                305              MOVEM.W D0-D3,-(A7)                 ; Save registers d0-d3 on stack
+0000117E                           306  
+0000117E                           307              ; Read first part of keyboard inputs
+0000117E  103C 0013                308              MOVE.B  #19,D0                      ; Set command to read keyboard input
+00001182  223C 20505145            309              MOVE.L  #KBDSTART<<24|KBDSHOOT<<16|KBDQ<<8|KBDE,D1 ; Configure input bits in d1
+00001188  4E4F                     310              TRAP    #15                         ; System call to read keyboard
+0000118A                           311  
+0000118A                           312              ; Pack bits into desired format
+0000118A  4EB9 000011BA            313              JSR     .PACK                       ; Pack bits subroutine
+00001190                           314  
+00001190                           315              ; Read second part of keyboard inputs
+00001190  223C 57415344            316              MOVE.L  #KBDW<<24|KBDA<<16|KBDS<<8|KBDD,D1 ; Configure next set of input bits
+00001196  4E4F                     317              TRAP    #15                         ; System call to read keyboard
+00001198                           318  
+00001198                           319              ; Pack bits into desired format
+00001198  4EB9 000011BA            320              JSR     .PACK                       ; Pack bits subroutine
+0000119E                           321  
+0000119E                           322              ; Compute edge-triggered inputs (KBDEDGE)
+0000119E  1039 0000234A            323              MOVE.B  (KBDVAL),D0                 ; Load current keyboard values into d0
+000011A4  4600                     324              NOT.B   D0                          ; Invert d0 to detect changes
+000011A6  C002                     325              AND.B   D2,D0                       ; Apply mask to get edge changes
+000011A8  13C0 0000234B            326              MOVE.B  D0,(KBDEDGE)                ; Store edge-triggered inputs
+000011AE                           327  
+000011AE                           328              ; Store new keyboard state
+000011AE  13C2 0000234A            329              MOVE.B  D2,(KBDVAL)                 ; Update KBDVAL with new state
+000011B4                           330  
+000011B4  4C9F 000F                331              MOVEM.W (A7)+,D0-D3                 ; Restore registers d0-d3
+000011B8  4E73                     332              RTE                                 ; Return from exception
+000011BA                           333  
+000011BA                           334  .PACK       ; Subroutine to pack bits into desired format
+000011BA  363C 0003                335              MOVE.W  #3,D3                       ; Initialize bit counter (3 iterations)
+000011BE  E189                     336  .LOOP       LSL.L   #8,D1                     ; Shift left by 8 bits in d1
+000011C0  E312                     337              ROXL.B  #1,D2                       ; Rotate left with extend d2
+000011C2  51CB FFFA                338              DBRA    D3,.LOOP                    ; Loop until all bits are processed
+000011C6  4E75                     339              RTS                                 ; Return from subroutine
+000011C6  4E75                     340  -------------------- end include --------------------
+000011C8                           341              INCLUDE "RANDOM.X68"        ; Include random number generation utilities
+000011C8                           342  ; =============================================================================
+000011C8                           343  ; TITLE    : PSEUDO-RANDOM NUMBER GENERATOR
+000011C8                           344  ; AUTHOR   : ANTONI BURGUERA (modified by ASSEMBLY DUCK HUNT authors)
+000011C8                           345  ; COMMENTS : Very lazy and inefficient "algorithm" implemented.
+000011C8                           346  ; HISTORY  : XX-XXX-201X - Creation
+000011C8                           347  ;            11-Oct-2020 - Minor changes
+000011C8                           348  ;            XX-Dec-2024 - Minor comment changes for compatibility with Assembly Duck Hunt
+000011C8                           349  ; =============================================================================
+000011C8                           350  
+000011C8                           351  ; -----------------------------------------------------------------------------
+000011C8                           352  RNDINIT
+000011C8                           353  ; INITIALIZES RANDOM NUMBER GENERATOR
+000011C8                           354  ; INPUT    : NONE
+000011C8                           355  ; OUTPUT   : NONE
+000011C8                           356  ; MODIFIES : NONE
+000011C8                           357  ; -----------------------------------------------------------------------------
+000011C8  4239 00002338            358              CLR.B   (RNDINDEX)          ; Set rndindex to 0
+000011CE  4E75                     359              RTS                         ; Return from subroutine
+000011D0                           360  
+000011D0                           361  ; -----------------------------------------------------------------------------
+000011D0                           362  RNDGET
+000011D0                           363  ; PROVIDES A PSEUDO-RANDOM BYTE
+000011D0                           364  ; INPUT    : NONE
+000011D0                           365  ; OUTPUT   : D0.L random value (only byte)
+000011D0                           366  ; MODIFIES : NONE (aside from output)
+000011D0                           367  ; -----------------------------------------------------------------------------
+000011D0  2F08                     368              MOVE.L  A0,-(A7)            ; Save register a0 on stack
+000011D2  41F9 000011EE            369              LEA     .RANDVEC,A0         ; Load address of random vector into a0
+000011D8  4280                     370              CLR.L   D0                  ; Clear d0 to ensure clean value
+000011DA  1039 00002338            371              MOVE.B  (RNDINDEX),D0       ; Load current rndindex into d0
+000011E0  1030 0800                372              MOVE.B  (A0,D0.L),D0        ; Fetch value from random vector using index
+000011E4                           373              
+000011E4                           374  .CONTINUE
+000011E4  5239 00002338            375              ADDQ.B  #1,(RNDINDEX)       ; Increment rndindex for next call
+000011EA  205F                     376              MOVE.L  (A7)+,A0            ; Restore register a0 from stack
+000011EC  4E75                     377              RTS                         ; Return from subroutine
+000011EE                           378  
+000011EE= 02 06 00 00 03 00 ...    379  .RANDVEC    DC.B    2, 6, 0, 0, 3, 0, 0, 2  ; Random vector data
+000011F6= 03 05 01 04 05 04 ...    380              DC.B    3, 5, 1, 4, 5, 4, 2, 5
+000011FE= 03 04 06 06 02 00 ...    381              DC.B    3, 4, 6, 6, 2, 0, 1, 3
+00001206= 03 00 02 04 03 06 ...    382              DC.B    3, 0, 2, 4, 3, 6, 1, 6
+0000120E= 02 06 05 03 06 00 ...    383              DC.B    2, 6, 5, 3, 6, 0, 5, 0
+00001216= 02 05 04 02 01 06 ...    384              DC.B    2, 5, 4, 2, 1, 6, 5, 6
+0000121E= 03 05 02 06 05 00 ...    385              DC.B    3, 5, 2, 6, 5, 0, 6, 1
+00001226= 01 01 00 04 00 06 ...    386              DC.B    1, 1, 0, 4, 0, 6, 3, 4
+0000122E= 01 05 03 01 06 02 ...    387              DC.B    1, 5, 3, 1, 6, 2, 4, 1
+00001236= 05 06 01 02 06 04 ...    388              DC.B    5, 6, 1, 2, 6, 4, 4, 2
+0000123E= 00 05 02 00 06 01 ...    389              DC.B    0, 5, 2, 0, 6, 1, 5, 4
+00001246= 04 01 02 03 01 00 ...    390              DC.B    4, 1, 2, 3, 1, 0, 6, 6
+0000124E= 04 00 05 06 04 00 ...    391              DC.B    4, 0, 5, 6, 4, 0, 4, 3
+00001256= 01 05 04 05 05 03 ...    392              DC.B    1, 5, 4, 5, 5, 3, 1, 5
+0000125E= 06 06 02 00 02 04 ...    393              DC.B    6, 6, 2, 0, 2, 4, 4, 1
+00001266= 00 04 02 03 01 05 ...    394              DC.B    0, 4, 2, 3, 1, 5, 4, 5
+0000126E= 06 03 02 05 06 05 ...    395              DC.B    6, 3, 2, 5, 6, 5, 0, 1
+00001276= 04 02 05 03 05 06 ...    396              DC.B    4, 2, 5, 3, 5, 6, 1, 1
+0000127E= 05 01 06 05 00 05 ...    397              DC.B    5, 1, 6, 5, 0, 5, 6, 5
+00001286= 03 04 02 05 06 00 ...    398              DC.B    3, 4, 2, 5, 6, 0, 3, 3
+0000128E= 06 04 06 06 04 00 ...    399              DC.B    6, 4, 6, 6, 4, 0, 4, 1
+00001296= 06 03 01 04 00 06 ...    400              DC.B    6, 3, 1, 4, 0, 6, 4, 4
+0000129E= 03 06 04 03 04 06 ...    401              DC.B    3, 6, 4, 3, 4, 6, 1, 3
+000012A6= 03 03 03 01 03 02 ...    402              DC.B    3, 3, 3, 1, 3, 2, 2, 2
+000012AE= 01 02 01 05 02 01 ...    403              DC.B    1, 2, 1, 5, 2, 1, 4, 2
+000012B6= 00 02 02 01 00 04 ...    404              DC.B    0, 2, 2, 1, 0, 4, 2, 6
+000012BE= 03 06 00 01 01 03 ...    405              DC.B    3, 6, 0, 1, 1, 3, 1, 2
+000012C6= 03 05 06 05 03 04 ...    406              DC.B    3, 5, 6, 5, 3, 4, 0, 4
+000012CE= 01 05 05 06 02 01 ...    407              DC.B    1, 5, 5, 6, 2, 1, 6, 0
+000012D6= 00 03 03 05 00 05 ...    408              DC.B    0, 3, 3, 5, 0, 5, 6, 6
+000012DE= 06 01 02 02 04 06 ...    409              DC.B    6, 1, 2, 2, 4, 6, 6, 6
+000012E6= 06 05 04 01 02 05 ...    410              DC.B    6, 5, 4, 1, 2, 5, 6, 4
+000012E6= 06 05 04 01 02 05 ...    411  -------------------- end include --------------------
+000012EE                           412              INCLUDE "DUCK.X68"          ; Include duck-related functions (likely for duck movement)
+000012EE                           413  ; ==============================================================================
+000012EE                           414  ; DUCK MANAGEMENT
+000012EE                           415  ; Manages the initialization, update, collision handling, and plotting of the
+000012EE                           416  ; duck. Includes subroutines for duck initialization (DCKINIT, DCKRSPW), 
+000012EE                           417  ; updating position and velocity (DCKUPD), and drawing the duck on the screen
+000012EE                           418  ; (DCKPLOT).
+000012EE                           419  ; ==============================================================================
+000012EE                           420  
+000012EE                           421  ; ------------------------------------------------------------------------------
+000012EE                           422  DCKINIT
+000012EE                           423  ; Initializes the duck's position and velocity with default values.
+000012EE                           424  ; INPUT    : NONE
+000012EE                           425  ; OUTPUT   : NONE
+000012EE                           426  ; MODIFIES : DCKPOSX, DCKPOSY, DCKVELX, DCKVELY, DCKVLSX, DCKVLSY, DCKVLI
+000012EE                           427  ; ------------------------------------------------------------------------------
+000012EE                           428  
+000012EE  48A7 80E0                429              MOVEM.W D0/A0-A2,-(A7)      ; Save registers d0 and a0-a2 on stack
+000012F2                           430  
+000012F2  4EB8 11D0                431              JSR     RNDGET              ; Generate a random number (0-7) in d0
+000012F6  C0FC 0002                432              MULU.W  #2,D0               ; Multiply the random number by 2
+000012FA                           433  
+000012FA  41F8 1000                434              LEA.L   BINITVEC,A0         ; Load address of binitvec into a0
+000012FE                           435  
+000012FE  3030 0800                436              MOVE.W  (A0,D0.L),D0        ; Fetch an initial position vector
+00001302                           437  
+00001302  33C0 00002010            438              MOVE.W  D0,(DCKPOSX)        ; Set the initial x position of the duck
+00001308  33FC 0190 00002012       439              MOVE.W  #BCKHEIGH-GRSHEIGH,(DCKPOSY)    ; Set the initial y position
+00001310                           440  
+00001310  33FC 0001 0000201C       441              MOVE.W  #1,(DCKDIR)         ; Set the initial duck direction (1 = right, -1 = left)
+00001318                           442              
+00001318  33FC 0002 00002014       443              MOVE.W  #DCKSPEED,(DCKVELX) ; Initialize x velocity
+00001320  33FC 0002 00002016       444              MOVE.W  #DCKSPEED,(DCKVELY) ; Initialize y velocity
+00001328  33FC 0002 00002018       445              MOVE.W  #DCKSPEED,(DCKVLSX) ; Initialize scaled x velocity
+00001330  33FC 0002 0000201A       446              MOVE.W  #DCKSPEED,(DCKVLSY) ; Initialize scaled y velocity
+00001338                           447  
+00001338  33FC 0002 0000201E       448              MOVE.W  #DCKSPEED,(DCKVLI)  ; Initialize velocity index
+00001340                           449  
+00001340  43F9 00001358            450              LEA     .DCKFILE,A1         ; Get file name pointer
+00001346  45F9 00002020            451              LEA     DCKSPR,A2           ; Get variable pointer
+0000134C  4EB9 00001E98            452              JSR     SPRINIT             ; Load file into memory
+00001352                           453  
+00001352  4C9F 0701                454              MOVEM.W (A7)+,D0/A0-A2      ; Restore registers d0 and a0-a2
+00001356                           455  
+00001356  4E75                     456              RTS                         ; Return from subroutine
+00001358                           457  
+00001358= 46 49 4C 45 53 2F ...    458  .DCKFILE   DC.B    'FILES/DUCK.BMP',0
+00001368                           459              DS.W    0
+00001368                           460  
+00001368                           461  ; ------------------------------------------------------------------------------
+00001368                           462  DCKRSPW
+00001368                           463  ; INITIALIZE DUCK.
+00001368                           464  ; INPUT    : NONE 
+00001368                           465  ; OUTPUT   : NONE
+00001368                           466  ; MODIFIES : NONE
+00001368                           467  ; ------------------------------------------------------------------------------
+00001368                           468  
+00001368  48A7 8080                469              MOVEM.W D0/A0,-(A7)         ; Save registers d0 and a0 on stack
+0000136C                           470  
+0000136C  4EB8 11D0                471              JSR     RNDGET              ; Generate a random number (0-7) in d0
+00001370  C0FC 0002                472              MULU.W  #2,D0               ; Multiply the random number by 2
+00001374  41F8 1000                473              LEA.L   BINITVEC,A0         ; Load address of binitvec into a0
+00001378                           474  
+00001378  3030 0800                475              MOVE.W  (A0,D0.L),D0        ; Fetch an initial position vector
+0000137C                           476  
+0000137C  33C0 00002010            477              MOVE.W  D0,(DCKPOSX)        ; Set the initial x position of the duck
+00001382  33FC 0190 00002012       478              MOVE.W  #BCKHEIGH-GRSHEIGH,(DCKPOSY)    ; Set the initial y position
+0000138A                           479              
+0000138A  33F9 0000201E 00002014   480              MOVE.W  (DCKVLI),(DCKVELX)  ; Initialize x velocity
+00001394  33F9 0000201E 00002016   481              MOVE.W  (DCKVLI),(DCKVELY)  ; Initialize y velocity
+0000139E  33F9 0000201E 00002018   482              MOVE.W  (DCKVLI),(DCKVLSX)  ; Initialize scaled x velocity
+000013A8  33F9 0000201E 0000201A   483              MOVE.W  (DCKVLI),(DCKVLSY)  ; Initialize scaled y velocity
+000013B2                           484  
+000013B2  4C9F 0101                485              MOVEM.W (A7)+,D0/A0        ; Restore registers d0 and a0
+000013B6                           486  
+000013B6  4E75                     487              RTS                        ; Return from subroutine
+000013B8                           488  
+000013B8                           489  ; ------------------------------------------------------------------------------
+000013B8                           490  DCKUPD
+000013B8                           491  ; UPDATES THE DUCK.
+000013B8                           492  ; INPUT    : NONE 
+000013B8                           493  ; OUTPUT   : NONE
+000013B8                           494  ; MODIFIES : NONE
+000013B8                           495  ; ------------------------------------------------------------------------------
+000013B8                           496  
+000013B8  48A7 FC80                497              MOVEM.W D0-D5/A0,-(A7)      ; Save registers d0-d5 and a0 on stack
+000013BC  4283                     498              CLR.L   D3                  ; Clear d3 (used as a collision flag)
+000013BE                           499  
+000013BE                           500              ; Update duck coordinates
+000013BE  3239 00002010            501              MOVE.W  (DCKPOSX),D1        ; Load current x position
+000013C4  3439 00002012            502              MOVE.W  (DCKPOSY),D2        ; Load current y position
+000013CA  D279 00002018            503              ADD.W   (DCKVLSX),D1        ; Add scaled x velocity
+000013D0  D479 0000201A            504              ADD.W   (DCKVLSY),D2        ; Add scaled y velocity
+000013D6                           505              
+000013D6                           506              ; Check horizontal collisions
+000013D6  B27C 0262                507              CMP.W   #SCRWIDTH-DCKRAD,D1 ; Compare with right boundary
+000013DA  6E00 001E                508              BGT     .COLRGT             ; If greater, handle right collision
+000013DE  B27C 001E                509              CMP.W   #DCKRAD,D1          ; Compare with left boundary
+000013E2  6D00 0034                510              BLT     .COLLFT             ; If less, handle left collision
+000013E6                           511              
+000013E6                           512              ; Check vertical collisions
+000013E6  B47C 0172                513  .CHKVERT    CMP.W   #SCRHEIGH-GRSHEIGH-DCKRAD,D2 ; Compare with bottom boundary
+000013EA  6E00 004A                514              BGT     .COLBOT             ; If greater, handle bottom collision
+000013EE  B47C 001E                515              CMP.W   #DCKRAD,D2          ; Compare with top boundary
+000013F2  6D00 0056                516              BLT     .COLTOP             ; If less, handle top collision
+000013F6  6000 00AC                517              BRA     .DONE               ; If no collision, skip to done
+000013FA                           518  
+000013FA                           519              ; Right side collision
+000013FA  323C 0262                520  .COLRGT     MOVE.W  #SCRWIDTH-DCKRAD,D1 ; Set x to right boundary
+000013FE  4479 00002014            521              NEG.W   (DCKVELX)           ; Reverse x velocity
+00001404  4479 00002018            522              NEG.W   (DCKVLSX)           ; Reverse scaled x velocity
+0000140A  4479 0000201C            523              NEG.W   (DCKDIR)            ; Reverse direction
+00001410  08C3 0001                524              BSET.L  #1,D3               ; Set collision flag
+00001414  6000 0048                525              BRA     .MULTVEL            ; Adjust velocity
+00001418                           526  
+00001418                           527              ; Left side collision
+00001418  323C 001E                528  .COLLFT     MOVE.W  #DCKRAD,D1          ; Set x to left boundary
+0000141C  4479 00002014            529              NEG.W   (DCKVELX)           ; Reverse x velocity
+00001422  4479 00002018            530              NEG.W   (DCKVLSX)           ; Reverse scaled x velocity
+00001428  4479 0000201C            531              NEG.W   (DCKDIR)            ; Reverse direction
+0000142E  08C3 0001                532              BSET.L  #1,D3               ; Set collision flag
+00001432  6000 002A                533              BRA     .MULTVEL            ; Adjust velocity
+00001436                           534  
+00001436                           535              ; Bottom collision
+00001436  4479 00002016            536  .COLBOT     NEG.W   (DCKVELY)           ; Reverse y velocity
+0000143C  4479 0000201A            537              NEG.W   (DCKVLSY)           ; Reverse scaled y velocity
+00001442  343C 0172                538              MOVE.W  #SCRHEIGH-GRSHEIGH-DCKRAD,D2 ; Set y to bottom boundary
+00001446  6000 0016                539              BRA     .MULTVEL            ; Adjust velocity
+0000144A                           540  
+0000144A                           541              ; Top collision
+0000144A  4479 00002016            542  .COLTOP     NEG.W   (DCKVELY)           ; Reverse y velocity
+00001450  4479 0000201A            543              NEG.W   (DCKVLSY)           ; Reverse scaled y velocity
+00001456  343C 001E                544              MOVE.W  #DCKRAD,D2          ; Set y to top boundary
+0000145A  6000 0002                545              BRA     .MULTVEL            ; Adjust velocity
+0000145E                           546  
+0000145E                           547              ; Multiply the velocity when colliding to get a random direction
+0000145E  4EB8 11D0                548  .MULTVEL    JSR     RNDGET              ; Generate a random number (0-7) in d0
+00001462  41F8 100E                549              LEA.L   BVECVELX,A0         ; Load velocity adjustment vector for x
+00001466                           550  
+00001466                           551              ; Update x speed
+00001466  1A30 0800                552              MOVE.B  (A0,D0.L),D5        ; Fetch random velocity adjustment
+0000146A  3839 00002014            553              MOVE.W  (DCKVELX),D4        ; Load current x velocity
+00001470  C9C5                     554              MULS.W  D5,D4               ; Scale velocity
+00001472  89FC 0064                555              DIVS.W  #100,D4             ; Normalize velocity
+00001476  33C4 00002018            556              MOVE.W  D4,(DCKVLSX)        ; Update scaled x velocity
+0000147C                           557  
+0000147C  41F8 1015                558              LEA.L   BVECVELY,A0         ; Load velocity adjustment vector for y
+00001480                           559  
+00001480                           560              ; Update y speed
+00001480  1A30 0800                561              MOVE.B  (A0,D0.L),D5        ; Fetch random velocity adjustment
+00001484  3839 00002016            562              MOVE.W  (DCKVELY),D4        ; Load current y velocity
+0000148A  C9C5                     563              MULS.W  D5,D4               ; Scale velocity
+0000148C  89FC 0064                564              DIVS.W  #100,D4             ; Normalize velocity
+00001490  33C4 0000201A            565              MOVE.W  D4,(DCKVLSY)        ; Update scaled y velocity
+00001496                           566  
+00001496  1E3C 0000                567              MOVE.B  #SNDQUAK,D7         ; Load quack sound code into d7
+0000149A  4E42                     568              TRAP    #SNDPLTN            ; Play quack sound
+0000149C                           569  
+0000149C                           570              ; Test d3 and jump if it's a side collision, else continue to done
+0000149C  0803 0001                571              BTST.L  #1,D3               ; Check if horizontal collision occurred
+000014A0  6600 FF44                572              BNE     .CHKVERT            ; If so, check vertical collisions again
+000014A4                           573  
+000014A4  33C1 00002010            574  .DONE       MOVE.W  D1,(DCKPOSX)      ; Save updated x position
+000014AA  33C2 00002012            575              MOVE.W  D2,(DCKPOSY)        ; Save updated y position
+000014B0                           576  
+000014B0  4C9F 013F                577              MOVEM.W (A7)+,D0-D5/A0      ; Restore saved registers
+000014B4                           578  
+000014B4  4E75                     579              RTS                         ; Return from subroutine
+000014B6                           580    
+000014B6                           581  ; ------------------------------------------------------------------------------
+000014B6                           582  DCKPLOT
+000014B6                           583  ; PLOT THE DUCK.
+000014B6                           584  ; INPUT    : NONE 
+000014B6                           585  ; OUTPUT   : NONE
+000014B6                           586  ; MODIFIES : NONE
+000014B6                           587  ; ------------------------------------------------------------------------------
+000014B6                           588  
+000014B6  48E7 F840                589              MOVEM.L D0-D4/A1,-(A7)      ; Save registers d0-d4 and a1 on stack
+000014BA                           590  
+000014BA  3639 00002010            591              MOVE.W  (DCKPOSX),D3        ; Get duck x position
+000014C0  3839 00002012            592              MOVE.W  (DCKPOSY),D4        ; Get duck y position
+000014C6  0443 001F                593              SUB.W   #31,D3              ; Sprite x position correction
+000014CA  0644 001E                594              ADD.W   #30,D4              ; Sprite y position correction
+000014CE                           595              
+000014CE  43F9 00002020            596              LEA     DCKSPR,A1           ; Load address of duck sprite into a1
+000014D4                           597  
+000014D4  1039 0000201C            598              MOVE.B  (DCKDIR),D0         ; Get duck direction from dckdir
+000014DA  6700 0012                599              BEQ     .DCKRGT             ; If direction is 0, go to dckrgt
+000014DE                           600              
+000014DE  0643 002D                601              ADD.W   #45,D3              ; Adjust sprite x position correction
+000014E2  5A44                     602              ADD.W   #5,D4               ; Adjust sprite y position correction
+000014E4  4EB9 00001F36            603              JSR     INVERSPR            ; Invert sprite for left direction
+000014EA  6000 0008                604              BRA     .CONT               ; Continue to plot
+000014EE                           605  
+000014EE  4EB9 00001EE4            606  .DCKRGT     JSR     PRINTSPR          ; Print sprite for right direction
+000014F4                           607              
+000014F4                           608  .CONT       ; Define hitbox coordinates
+000014F4  3239 00002010            609              MOVE.W  (DCKPOSX),D1                 
+000014FA  0441 001E                610              SUB.W   #DCKRAD,D1         ; Calculate x-min coordinate
+000014FE  3439 00002012            611              MOVE.W  (DCKPOSY),D2                 
+00001504  0442 001E                612              SUB.W   #DCKRAD,D2         ; Calculate y-min coordinate
+00001508  3601                     613              MOVE.W  D1,D3               
+0000150A  0643 003C                614              ADD.W   #2*DCKRAD,D3       ; Calculate x-max coordinate
+0000150E  3802                     615              MOVE.W  D2,D4               
+00001510  0644 003C                616              ADD.W   #2*DCKRAD,D4       ; Calculate y-max coordinate
+00001514                           617  
+00001514                           618              ; Set hitbox pen color
+00001514  103C 0050                619              MOVE.B  #80,D0              ; Code for setting pen color
+00001518  223C 00FF1100            620              MOVE.L  #BOXPCOL, D1         ; Load hitbox contour color constant into d1
+0000151E  4E4F                     621              TRAP    #15                 ; Set pen color
+00001520                           622              
+00001520                           623              ; Set hitbox fill color (if needed, add code here)
+00001520                           624  
+00001520                           625              ; Define hitbox coordinates with adjustment
+00001520  3239 00002010            626              MOVE.W  (DCKPOSX),D1                 
+00001526  0441 001E                627              SUB.W   #DCKRAD,D1         ; Calculate preliminary x coordinate
+0000152A  0441 000A                628              SUB.W   #10, D1            ; Adjust: x-min coordinate is in d1
+0000152E  33C1 0000233A            629              MOVE.W  D1, BOX_XMIN        ; Store x-min coordinate in box_xmin
+00001534  0643 000A                630              ADD.W   #10, D3            ; Adjust: x-max coordinate is in d3
+00001538  33C3 0000233C            631              MOVE.W  D3, BOX_XMAX        ; Store x-max coordinate in box_xmax
+0000153E  0442 000A                632              SUB.W   #10, D2            ; Adjust: y-min coordinate is in d2
+00001542  33C2 0000233E            633              MOVE.W  D2, BOX_YMIN        ; Store y-min coordinate in box_ymin
+00001548  0644 000A                634              ADD.W   #10, D4            ; Adjust: y-max coordinate is in d4
+0000154C  33C4 00002340            635              MOVE.W  D4, BOX_YMAX        ; Store y-max coordinate in box_ymax
+00001552                           636  
+00001552                           637              ; Draw hitbox (code commented out)
+00001552                           638              ; MOVE.B  #90, D0
+00001552                           639              ; TRAP    #15
+00001552                           640                                          
+00001552  4CDF 021F                641              MOVEM.L (A7)+,D0-D4/A1      ; Restore registers d0-d4 and a1 from stack
+00001556                           642  
+00001556  4E75                     643              RTS                         ; Return from subroutine
+00001556  4E75                     644  -------------------- end include --------------------
+00001558                           645              INCLUDE "BCKGROUN.X68"      ; Include background drawing utilities
+00001558                           646  ; ==============================================================================
+00001558                           647  ; BACKGROUND MANAGEMENT
+00001558                           648  ; ==============================================================================
+00001558                           649  
+00001558                           650  ; ------------------------------------------------------------------------------
+00001558                           651  BCKPLOT
+00001558                           652  ; PLOT THE BACKGROUND.
+00001558                           653  ; INPUT    : NONE 
+00001558                           654  ; OUTPUT   : NONE
+00001558                           655  ; MODIFIES : NONE
+00001558                           656  ; ------------------------------------------------------------------------------
+00001558                           657  
+00001558  48E7 F800                658              MOVEM.L D0-D4,-(A7)          ; Save registers D0-D4 on stack
+0000155C                           659  
+0000155C                           660              ; sky graphics
+0000155C  223C 00FFAD63            661              MOVE.L  #BCKPCOL,D1          ; Load background color constant into D1
+00001562  103C 0050                662              MOVE.B  #80,D0               ; Load pen color code into D0
+00001566  4E4F                     663              TRAP    #15                  ; Set pen color
+00001568  103C 0051                664              MOVE.B  #81,D0               ; Load fill color code into D0
+0000156C  4E4F                     665              TRAP    #15                  ; Set fill color
+0000156E                           666              
+0000156E  323C 0000                667              MOVE.W  #BCKPOSX-BCKWIDTH/2,D1  ; Calculate left x-coordinate for background rectangle
+00001572  363C 0280                668              MOVE.W  #BCKPOSX+BCKWIDTH/2,D3  ; Calculate right x-coordinate for background rectangle
+00001576  3438 00F0                669              MOVE.W  (BCKPOSY),D2         ; Load base y-coordinate from memory into D2
+0000157A  3802                     670              MOVE.W  D2,D4               ; Copy y-coordinate to D4 as starting coordinate
+0000157C  0644 01E0                671              ADD.W   #BCKHEIGH,D4         ; Add height to y-coordinate to define bottom edge
+00001580                           672              
+00001580  103C 0057                673              MOVE.B  #87,D0               ; Load rectangle drawing code into D0
+00001584  4E4F                     674              TRAP    #15                  ; Draw rectangle
+00001586                           675              
+00001586                           676              ; grass constants
+00001586  223C 0000D78D            677              MOVE.L  #GRSPCOL,D1          ; Load grass color constant into D1
+0000158C  103C 0050                678              MOVE.B  #80,D0               ; Load pen color code into D0
+00001590  4E4F                     679              TRAP    #15                  ; Set pen color
+00001592                           680              
+00001592  103C 0051                681              MOVE.B  #81,D0               ; Load fill color code into D0
+00001596  4E4F                     682              TRAP    #15                  ; Set fill color
+00001598                           683  
+00001598  323C 0000                684              MOVE.W  #GRSPOSX,D1          ; Load left x-coordinate for grass rectangle into D1  
+0000159C  363C 0280                685              MOVE.W  #GRSPOSX+GRSWIDTH,D3 ; Calculate right x-coordinate for grass rectangle and store in D3
+000015A0  343C 0190                686              MOVE.W  #GRSPOSY,D2          ; Load base y-coordinate for grass rectangle into D2
+000015A4  3802                     687              MOVE.W  D2,D4               ; Copy y-coordinate to D4 as starting coordinate
+000015A6  0644 0050                688              ADD.W   #GRSHEIGH,D4         ; Add height to y-coordinate to define top edge
+000015AA                           689              
+000015AA  103C 0057                690              MOVE.B  #87,D0               ; Load rectangle drawing code into D0
+000015AE  4E4F                     691              TRAP    #15                  ; Draw rectangle
+000015B0                           692  
+000015B0  4CDF 001F                693              MOVEM.L (A7)+,D0-D4          ; Restore registers D0-D4 from stack
+000015B4                           694  
+000015B4  4E75                     695              RTS                        ; Return from subroutine
+000015B4  4E75                     696  -------------------- end include --------------------
+000015B6                           697              INCLUDE "SCORE.X68"         ; Include scoring system functions
+000015B6                           698  ; ==============================================================================
+000015B6                           699  ; SCOREBOARD MANAGEMENT
+000015B6                           700  ; Handles the initialization and rendering of the scoreboard, including score,
+000015B6                           701  ; bullets, and round information.
+000015B6                           702  ; ==============================================================================
+000015B6                           703  
+000015B6                           704  ; ------------------------------------------------------------------------------
+000015B6                           705  SCOINIT
+000015B6                           706  ; INITIALIZE SCOREBOARD
+000015B6                           707  ; INPUT    : NONE
+000015B6                           708  ; OUTPUT   : NONE
+000015B6                           709  ; MODIFIES : NONE
+000015B6                           710  ; DESCRIPTION: Resets the scoreboard values, including points, bullets, and 
+000015B6                           711  ;              rounds, to their default starting state.
+000015B6                           712  ; ------------------------------------------------------------------------------
+000015B6                           713              
+000015B6  4279 00002332            714              CLR.W   (SCOPNT)         ; Clear current score
+000015BC  4279 00002334            715              CLR.W   (SCOBUL)         ; Clear bullets count
+000015C2  4279 00002336            716              CLR.W   (SCORND)         ; Clear round count
+000015C8  5E79 00002334            717              ADD.W   #BULLETN, SCOBUL ; Set initial number of bullets to BULLETN
+000015CE  4E75                     718              RTS                      ; Return from subroutine
+000015D0                           719              
+000015D0                           720  ; ------------------------------------------------------------------------------
+000015D0                           721  SCOPLOT
+000015D0                           722  ; PLOT THE SCOREBOARD
+000015D0                           723  ; INPUT    : NONE
+000015D0                           724  ; OUTPUT   : NONE
+000015D0                           725  ; MODIFIES : NONE
+000015D0                           726  ; DESCRIPTION: Displays the scoreboard on the screen, showing the player's 
+000015D0                           727  ;              current score, bullets remaining, and round number.
+000015D0                           728  ; ------------------------------------------------------------------------------
+000015D0                           729  
+000015D0  48E7 C040                730              MOVEM.L D0-D1/A1,-(A7)   ; Save registers d0, d1, and a1 on stack
+000015D4                           731  
+000015D4                           732              ; Set background color
+000015D4  103C 0051                733              MOVE.B  #81, D0          ; Load code for setting background color
+000015D8  7200                     734              MOVE.L  #SCOFCOL, D1     ; Load background color constant
+000015DA  4E4F                     735              TRAP    #15              ; Execute system call
+000015DC                           736  
+000015DC                           737              ; Set first line position
+000015DC  103C 000B                738              MOVE.B  #11, D0          ; Load code for setting cursor position
+000015E0  323C 3E1D                739              MOVE.W  #SCOLINE1, D1    ; Load y-coordinate for first line
+000015E4  4E4F                     740              TRAP    #15              ; Execute system call
+000015E6                           741  
+000015E6                           742              ; Print first line (Score)
+000015E6  43F9 0000163C            743              LEA     .TXT1, A1        ; Load address of "SCORE:" text
+000015EC  4281                     744              CLR.L   D1               ; Clear d1 for appending score value
+000015EE  3239 00002332            745              MOVE.W  (SCOPNT), D1     ; Load current score into d1
+000015F4  103C 0011                746              MOVE.B  #17, D0          ; Load code for printing text
+000015F8  4E4F                     747              TRAP    #15              ; Print "SCORE: [value]"
+000015FA                           748  
+000015FA                           749              ; Set second line position
+000015FA  103C 000B                750              MOVE.B  #11, D0          ; Load code for setting cursor position
+000015FE  323C 091D                751              MOVE.W  #SCOLINE2, D1    ; Load y-coordinate for second line
+00001602  4E4F                     752              TRAP    #15              ; Execute system call
+00001604                           753  
+00001604                           754              ; Print second line (Bullets)
+00001604  43F9 00001643            755              LEA     .TXT2, A1        ; Load address of "BULLETS:" text
+0000160A  4281                     756              CLR.L   D1               ; Clear d1 for appending bullets value
+0000160C  3239 00002334            757              MOVE.W  (SCOBUL), D1     ; Load current bullets count into d1
+00001612  103C 0011                758              MOVE.B  #17, D0          ; Load code for printing text
+00001616  4E4F                     759              TRAP    #15              ; Print "BULLETS: [value]"
+00001618                           760  
+00001618                           761              ; Set third line position
+00001618  103C 000B                762              MOVE.B  #11, D0          ; Load code for setting cursor position
+0000161C  323C 231D                763              MOVE.W  #SCOLINE3, D1    ; Load y-coordinate for third line
+00001620  4E4F                     764              TRAP    #15              ; Execute system call
+00001622                           765  
+00001622                           766              ; Print third line (Round)
+00001622  43F9 0000164C            767              LEA     .TXT3, A1        ; Load address of "ROUND:" text
+00001628  4281                     768              CLR.L   D1               ; Clear d1 for appending round value
+0000162A  3239 00002336            769              MOVE.W  (SCORND), D1     ; Load current round number into d1
+00001630  103C 0011                770              MOVE.B  #17, D0          ; Load code for printing text
+00001634  4E4F                     771              TRAP    #15              ; Print "ROUND: [value]"
+00001636                           772              
+00001636  4CDF 0203                773              MOVEM.L (A7)+, D0-D1/A1  ; Restore registers d0, d1, and a1 from stack
+0000163A                           774              
+0000163A  4E75                     775              RTS                      ; Return from subroutine
+0000163C                           776  
+0000163C                           777  ; ------------------------------------------------------------------------------
+0000163C                           778  ; TEXT STRINGS FOR SCOREBOARD
+0000163C                           779  ; These strings are null-terminated and represent the labels for the scoreboard.
+0000163C                           780  ; ------------------------------------------------------------------------------
+0000163C= 53 43 4F 52 45 3A 00     781  .TXT1       DC.B    'SCORE:', 0          ; Label for "SCORE:"
+00001643= 42 55 4C 4C 45 54 ...    782  .TXT2       DC.B    'BULLETS:', 0        ; Label for "BULLETS:"
+0000164C= 52 4F 55 4E 44 3A 00     783  .TXT3       DC.B    'ROUND:', 0          ; Label for "ROUND:"
+00001654                           784              DS.W    0                    ; Reserve space for additional text if needed
+00001654                           785  -------------------- end include --------------------
+00001654                           786              INCLUDE "CURSOR.X68"        ; Include cursor management utilities
+00001654                           787  ; ==============================================================================
+00001654                           788  ; CURSOR MANAGEMENT
+00001654                           789  ; ==============================================================================
+00001654                           790  
+00001654                           791  ; ------------------------------------------------------------------------------
+00001654                           792  CURSORUPD
+00001654                           793  ; UPDATES CURSOR
+00001654                           794  ; INPUT    : NONE 
+00001654                           795  ; OUTPUT   : NONE
+00001654                           796  ; MODIFIES : NONE
+00001654                           797  ; ------------------------------------------------------------------------------
+00001654                           798  
+00001654  48A7 F000                799          MOVEM.W D0-D3, -(A7)          ; Save registers d0-d3 on stack
+00001658                           800  
+00001658  303C 003D                801          MOVE    #61, D0               ; Code to read the mouse position (trap 61)
+0000165C  4E4F                     802          TRAP    #15                   ; System call to handle peripherals
+0000165E                           803          
+0000165E                           804          ; Extract x and y coordinates from d1
+0000165E  2401                     805          MOVE.L  D1, D2               ; Copy d1 to d2 for manipulation
+00001660  0282 0000FFFF            806          ANDI.L  #$FFFF, D2           ; Extract x coordinate (low 16 bits)
+00001666  2601                     807          MOVE.L  D1, D3               ; Copy d1 to d3 for manipulation
+00001668  4843                     808          SWAP    D3                   ; Swap high and low words
+0000166A  0283 0000FFFF            809          ANDI.L  #$FFFF, D3           ; Extract y coordinate (low 16 bits)
+00001670                           810          
+00001670                           811          ; Store coordinates in variables
+00001670  33C2 00002320            812          MOVE.W  D2, MOUSEX           ; Store x coordinate in mousex
+00001676  33C3 00002322            813          MOVE.W  D3, MOUSEY           ; Store y coordinate in mousey
+0000167C                           814          
+0000167C                           815          ; Update additional variables for cursor drawing
+0000167C  33C2 0000232A            816          MOVE.W  D2, RVTPOSX          ; Store x coordinate in rvtposx
+00001682  33C2 0000232E            817          MOVE.W  D2, RHZPOSX          ; Store x coordinate in rhzposx
+00001688  33C3 0000232C            818          MOVE.W  D3, RVTPOSY          ; Store y coordinate in rvtposy
+0000168E  33C3 00002330            819          MOVE.W  D3, RHZPOSY          ; Store y coordinate in rhzposy
+00001694                           820  
+00001694                           821          ; Read the current mouse state
+00001694  103C 003D                822          MOVE.B  #61, D0              ; Set to read mouse state
+00001698  123C 0000                823          MOVE.B  #00, D1              ; Check current state
+0000169C  4E4F                     824          TRAP    #15                  ; Call to get state
+0000169E                           825  
+0000169E                           826          ; Check if left button is pressed
+0000169E  0800 0000                827          BTST.L  #0, D0              ; Check if bit 0 (left button) is active
+000016A2  6700 00B0                828          BEQ     BUTTON_RELEASED     ; If not pressed, handle release
+000016A6                           829  
+000016A6                           830          ; Extract x and y coordinates from d1 (for click position)
+000016A6  2401                     831          MOVE.L  D1, D2              ; Copy d1 to d2 for manipulation
+000016A8  0282 0000FFFF            832          ANDI.L  #$FFFF, D2          ; Extract x coordinate (low 16 bits)
+000016AE  33C2 00002326            833          MOVE.W  D2, (MSCLICK_X)     ; Store x coordinate in msclick_x
+000016B4  2601                     834          MOVE.L  D1, D3              ; Copy d1 to d3 for manipulation
+000016B6  4843                     835          SWAP    D3                  ; Swap high and low words
+000016B8  0283 0000FFFF            836          ANDI.L  #$FFFF, D3          ; Extract y coordinate (low 16 bits)
+000016BE  33C3 00002328            837          MOVE.W  D3, (MSCLICK_Y)     ; Store y coordinate in msclick_y
+000016C4                           838  
+000016C4  1439 00002324            839          MOVE.B  PREV_STATE, D2      ; Load previous state into d2
+000016CA  B43C 0001                840          CMP.B   #1, D2              ; Compare with 1 (was already pressed)
+000016CE  6700 009E                841          BEQ     Done                ; If already pressed, do nothing
+000016D2                           842  
+000016D2  5379 00002334            843          SUB.W   #1, SCOBUL          ; Decrement available shots counter
+000016D8                           844  
+000016D8  1E3C 0001                845          MOVE.B  #SNDSHOT, D7        ; Load shot sound code into d7
+000016DC  4E42                     846          TRAP    #SNDPLTN            ; Play gunshot sound
+000016DE                           847  
+000016DE                           848          ; Check if the mouse click is within the target box
+000016DE  3639 0000233A            849          MOVE.W  (BOX_XMIN), D3       ; Get minimum x-coordinate of hitbox
+000016E4  B679 00002326            850          CMP.W   (MSCLICK_X), D3      ; Compare if mouse x is greater or equal to xmin
+000016EA  6300 0006                851          BLS     .MAYOR_XMIN         ; If below xmin, jump to coordinate reset
+000016EE  6000 004C                852          BRA     RESET_COORDS
+000016F2                           853  
+000016F2                           854  .MAYOR_XMIN
+000016F2  3639 0000233C            855          MOVE.W  (BOX_XMAX), D3       ; Get maximum x-coordinate of hitbox
+000016F8  B679 00002326            856          CMP.W   (MSCLICK_X), D3      ; Compare if mouse x is less or equal to xmax
+000016FE  6400 0006                857          BHS     .MAYOR_YMIN         ; If above xmax, jump to coordinate reset
+00001702  6000 0038                858          BRA     RESET_COORDS
+00001706                           859  
+00001706                           860  .MAYOR_YMIN
+00001706  3639 0000233E            861          MOVE.W  (BOX_YMIN), D3       ; Get minimum y-coordinate of hitbox
+0000170C  B679 00002328            862          CMP.W   (MSCLICK_Y), D3      ; Compare if mouse y is greater or equal to ymin
+00001712  6300 0006                863          BLS     .MENOR_YMAX         ; If below ymin, jump to coordinate reset
+00001716  6000 0024                864          BRA     RESET_COORDS
+0000171A                           865  
+0000171A                           866  .MENOR_YMAX
+0000171A  3639 00002340            867          MOVE.W  (BOX_YMAX), D3       ; Get maximum y-coordinate of hitbox
+00001720  B679 00002328            868          CMP.W   (MSCLICK_Y), D3      ; Compare if mouse y is less or equal to ymax
+00001726  6400 0006                869          BHS     .ADD_SCORE          ; If within range, add score
+0000172A  6000 0010                870          BRA     RESET_COORDS
+0000172E                           871  
+0000172E                           872  .ADD_SCORE        
+0000172E                           873          ; New click detected, add to the score counter
+0000172E  0679 0064 00002332       874          ADD.W   #100, SCOPNT         ; Increment the counter by 100           
+00001736  4EB9 000017F2            875          JSR     ROUINIT             ; Call routine to update related state
+0000173C                           876  
+0000173C                           877  RESET_COORDS
+0000173C  4279 00002326            878          CLR.W   MSCLICK_X           ; Clear msclick_x coordinate
+00001742  4279 00002328            879          CLR.W   MSCLICK_Y           ; Clear msclick_y coordinate
+00001748                           880  
+00001748                           881          ; Update previous state to indicate button pressed
+00001748  13FC 0001 00002324       882          MOVE.B  #1, PREV_STATE       ; Store current state as pressed
+00001750  6000 001C                883          BRA     Done                ; Jump to end
+00001754                           884  
+00001754                           885  BUTTON_RELEASED
+00001754                           886          ; Update previous state to indicate button not pressed
+00001754  13FC 0000 00002324       887          MOVE.B  #0, PREV_STATE       ; Store current state as not pressed
+0000175C                           888  
+0000175C                           889          ; Check if the game is over (no more shots available)
+0000175C  4A79 00002334            890          TST.W   SCOBUL              ; Test if scobul is 0
+00001762  6600 000A                891          BNE     DONE                ; If not 0, continue
+00001766  33FC 0003 00002348       892          MOVE.W  #3, (STANEXT)        ; Change to game over screen
+0000176E                           893  
+0000176E                           894  DONE                
+0000176E  4C9F 000F                895          MOVEM.W (A7)+, D0-D3        ; Restore registers d0-d3 from stack
+00001772  4E75                     896          RTS                         ; Return from subroutine
+00001774                           897  
+00001774                           898  ; ------------------------------------------------------------------------------
+00001774                           899  CURSORPLOT
+00001774                           900  ; PLOT THE CURSOR.
+00001774                           901  ; INPUT    : NONE 
+00001774                           902  ; OUTPUT   : NONE
+00001774                           903  ; MODIFIES : NONE
+00001774                           904  ; ------------------------------------------------------------------------------
+00001774                           905  
+00001774  48E7 F800                906          MOVEM.L D0-D4, -(A7)        ; Save registers d0-d4 on stack
+00001778                           907          
+00001778                           908          ; Vertical rectangle cursor
+00001778                           909          ; Set pen color for vertical rectangle
+00001778  103C 0050                910          MOVE.B  #80, D0             ; Code for setting pen color
+0000177C  223C 000000FF            911          MOVE.L  #RVTPCOL, D1        ; Load vertical rectangle pen color constant into d1
+00001782  4E4F                     912          TRAP    #15                 ; Set pen color
+00001784                           913              
+00001784                           914          ; Set fill color for vertical rectangle
+00001784  103C 0051                915          MOVE.B  #81, D0             ; Code for setting fill color
+00001788  223C 000000FF            916          MOVE.L  #RVTFCOL, D1        ; Load vertical rectangle fill color constant into d1
+0000178E  4E4F                     917          TRAP    #15                 ; Set fill color
+00001790                           918  
+00001790                           919          ; Define coordinates for vertical rectangle cursor
+00001790  3239 0000232A            920          MOVE.W  (RVTPOSX), D1       ; Load x coordinate from rvtposx into d1
+00001796  3601                     921          MOVE.W  D1, D3             ; Copy x coordinate to d3
+00001798  5541                     922          SUB.W   #RVTWIDTH/2, D1     ; Subtract half of the rectangle width from d1
+0000179A  5443                     923          ADD.W   #RVTWIDTH/2, D3     ; Add half of the rectangle width to d3
+0000179C                           924  
+0000179C  3439 0000232C            925          MOVE.W  (RVTPOSY), D2       ; Load y coordinate from rvtposy into d2
+000017A2  3802                     926          MOVE.W  D2, D4             ; Copy y coordinate to d4
+000017A4  0442 000F                927          SUB.W   #RVTHEIGH/2, D2     ; Subtract half of the rectangle height from d2
+000017A8  0644 000F                928          ADD.W   #RVTHEIGH/2, D4     ; Add half of the rectangle height to d4
+000017AC                           929  
+000017AC                           930          ; Draw vertical rectangle cursor
+000017AC  103C 0057                931          MOVE.B  #87, D0             ; Code for drawing rectangle
+000017B0  4E4F                     932          TRAP    #15                 ; Draw rectangle
+000017B2                           933  
+000017B2                           934          ; Horizontal rectangle cursor
+000017B2                           935          ; Set pen color for horizontal rectangle
+000017B2  103C 0050                936          MOVE.B  #80, D0             ; Code for setting pen color
+000017B6  223C 000000FF            937          MOVE.L  #RHZPCOL, D1        ; Load horizontal rectangle pen color constant into d1
+000017BC  4E4F                     938          TRAP    #15                 ; Set pen color
+000017BE                           939              
+000017BE                           940          ; Set fill color for horizontal rectangle
+000017BE  103C 0051                941          MOVE.B  #81, D0             ; Code for setting fill color
+000017C2  223C 000000FF            942          MOVE.L  #RHZFCOL, D1        ; Load horizontal rectangle fill color constant into d1
+000017C8  4E4F                     943          TRAP    #15                 ; Set fill color
+000017CA                           944  
+000017CA                           945          ; Define coordinates for horizontal rectangle cursor
+000017CA  3239 0000232E            946          MOVE.W  (RHZPOSX), D1       ; Load x coordinate from rhzposx into d1
+000017D0  3601                     947          MOVE.W  D1, D3             ; Copy x coordinate to d3
+000017D2  0441 000F                948          SUB.W   #RHZWIDTH/2, D1     ; Subtract half of the rectangle width from d1
+000017D6  0643 000F                949          ADD.W   #RHZWIDTH/2, D3     ; Add half of the rectangle width to d3
+000017DA                           950  
+000017DA  3439 00002330            951          MOVE.W  (RHZPOSY), D2       ; Load y coordinate from rhzposy into d2
+000017E0  3802                     952          MOVE.W  D2, D4             ; Copy y coordinate to d4
+000017E2  5542                     953          SUB.W   #RHZHEIGH/2, D2     ; Subtract half of the rectangle height from d2
+000017E4  5444                     954          ADD.W   #RHZHEIGH/2, D4     ; Add half of the rectangle height to d4
+000017E6                           955  
+000017E6                           956          ; Draw horizontal rectangle cursor
+000017E6  103C 0057                957          MOVE.B  #87, D0             ; Code for drawing rectangle
+000017EA  4E4F                     958          TRAP    #15                 ; Draw rectangle
+000017EC                           959  
+000017EC  4CDF 001F                960          MOVEM.L (A7)+, D0-D4         ; Restore registers d0-d4 from stack
+000017F0                           961              
+000017F0  4E75                     962          RTS                         ; Return from subroutine
+000017F0  4E75                     963  -------------------- end include --------------------
+000017F2                           964              INCLUDE "ROUND.X68"         ; Include functions related to game rounds
+000017F2                           965  ; ==============================================================================
+000017F2                           966  ; ROUND MANAGEMENT
+000017F2                           967  ; ==============================================================================
+000017F2                           968  
+000017F2                           969  ; ------------------------------------------------------------------------------
+000017F2                           970  ROUINIT
+000017F2                           971  ; INITIALIZE SYSTEM.
+000017F2                           972  ; INPUT    : NONE
+000017F2                           973  ; OUTPUT   : NONE
+000017F2                           974  ; MODIFIES : NONE
+000017F2                           975  ; ------------------------------------------------------------------------------
+000017F2                           976  
+000017F2  5279 0000201E            977              ADDQ.W  #1,(DCKVLI)        ; Increment duck velocity index by 1
+000017F8  33FC 0007 00002334       978              MOVE.W  #BULLETN, SCOBUL    ; Set the initial number of bullets to BULLETN
+00001800  33FC 0001 0000201C       979              MOVE.W  #1,(DCKDIR)         ; Set the initial direction to 1
+00001808  5279 00002336            980              ADDQ.W  #1,SCORND          ; Increment the round counter by 1
+0000180E                           981  
+0000180E  4EB8 1368                982              JSR     DCKRSPW           ; Initialize duck sprite and position
+00001812                           983  
+00001812  4E75                     984              RTS                       ; Return from subroutine
+00001812  4E75                     985  -------------------- end include --------------------
+00001814                           986              INCLUDE "UTILITIES.X68"     ; Include utility functions
+00001814                           987  ; ==============================================================================
+00001814                           988  ; UTILITIES CODE
+00001814                           989  ; ==============================================================================
+00001814                           990  
+00001814                           991  ;---------------------------------------------------------------------------------------------
+00001814                           992  UTLPRINT
+00001814                           993  ; PRINT SCREEN CENTERED TEXT
+00001814                           994  ; INPUT    : A0 pointer to zero-terminated string
+00001814                           995  ;          : D0 screen row to print exit
+00001814                           996  ; OUTPUT   : D0.B next row
+00001814                           997  ; MODIFIES : NONE (aside of output)
+00001814                           998  ;---------------------------------------------------------------------------------------------
+00001814                           999  
+00001814  48E7 C0C0               1000              MOVEM.L  D0-D1/A0-A1, -(A7)   ; Save registers
+00001818  4201                    1001              CLR.B   D1                  ; Clear d1
+0000181A  2248                    1002              MOVE.L  A0, A1              ; Copy pointer a0 to a1
+0000181C                          1003  
+0000181C  4A18                    1004  .LOOP       TST.B   (A0)+             ; Test next character
+0000181E  6700 0006               1005              BEQ     .ENDLOOP          ; Branch if end of string
+00001822  5201                    1006              ADDQ.B  #1, D1              ; Increment counter in d1
+00001824  60F6                    1007              BRA     .LOOP             ; Branch to loop
+00001826                          1008  
+00001826  E209                    1009  .ENDLOOP    LSR.B   #1, D1             ; Shift right d1 by 1
+00001828  0401 0028               1010              SUB.B   #(SCRWIDTH/ULTCHRWD)/2, D1  ; Subtract half screen width per char from d1
+0000182C  4401                    1011              NEG.B   D1                  ; Negate d1
+0000182E  E141                    1012              ASL.W   #8, D1              ; Shift left d1 by 8
+00001830  8240                    1013              OR.W    D0, D1              ; Or d0 with d1
+00001832  103C 000B               1014              MOVE.B  #11, D0             ; Load command 11 in d0
+00001836  4E4F                    1015              TRAP    #15                 ; Execute trap call
+00001838                          1016  
+00001838  103C 000D               1017              MOVE.B  #13, D0             ; Load command 13 in d0
+0000183C  4E4F                    1018              TRAP    #15                 ; Execute trap call
+0000183E                          1019  
+0000183E  4CDF 0303               1020              MOVEM.L (A7)+, D0-D1/A0-A1   ; Restore registers
+00001842  5200                    1021              ADDQ.B  #1, D0              ; Increment d0 by 1
+00001844  4E75                    1022              RTS                         ; Return from subroutine
+00001846                          1023  
+00001846                          1024  ;---------------------------------------------------------------------------------------------
+00001846                          1025  CONVSTRING_TO_NUMBER
+00001846                          1026  ; TURNS A STRING INTO A NUMBER
+00001846                          1027  ; INPUT    : A0 pointer to zero-terminated string
+00001846                          1028  ;          : D2 number of elements or bytes to convert
+00001846                          1029  ; OUTPUT   : The number converted in D2.L
+00001846                          1030  ; MODIFIES : NONE (aside of output)
+00001846                          1031  ;---------------------------------------------------------------------------------------------
+00001846  48E7 C080               1032      MOVEM.L D0-D1/A0, -(A7)         ; Save registers
+0000184A                          1033  .LOOP
+0000184A  1218                    1034          MOVE.B  (A0)+, D1         ; Load next character into d1
+0000184C  6700 0010               1035          BEQ     .DONE             ; Branch if end of string
+00001850  0401 0030               1036          SUB.B   #48, D1           ; Subtract 48 to convert ascii to number
+00001854  C1FC 000A               1037          MULS.W  #10, D0           ; Multiply accumulated number in d0 by 10
+00001858  D081                    1038          ADD.L   D1, D0           ; Add digit value from d1 to d0
+0000185A  51CA FFEE               1039          DBRA    D2, .LOOP         ; Decrement d2 and branch if not zero
+0000185E                          1040  .DONE
+0000185E  2400                    1041          MOVE.L  D0, D2            ; Move result from d0 to d2
+00001860  4CDF 0103               1042          MOVEM.L (A7)+, D0-D1/A0   ; Restore registers
+00001864  4E75                    1043          RTS                      ; Return from subroutine
+00001866                          1044  
+00001866                          1045  ;---------------------------------------------------------------------------------------------
+00001866                          1046  CONVNUMBER_TO_STRING
+00001866                          1047  ; CONVERTS A NUMBER INTO A STRING
+00001866                          1048  ; INPUT    : A0 pointer to zero-terminated string which is going to invert
+00001866                          1049  ;          : A1 pointer to zero-terminated string which will contain the original number as a string
+00001866                          1050  ; OUTPUT   : A2 address to string
+00001866                          1051  ; MODIFIES : NONE (aside of output)
+00001866                          1052  ;---------------------------------------------------------------------------------------------
+00001866  48A7 E0E0               1053              MOVEM.W D0-D2/A0-A2, -(A7)   ; Save registers
+0000186A  3400                    1054              MOVE    D0, D2             ; Copy number from d0 to d2 for conversion
+0000186C  2448                    1055              MOVEA.L A0, A2             ; Save start address of string in a2
+0000186E                          1056  
+0000186E                          1057  CONVERT 
+0000186E  3202                    1058              MOVE.W  D2, D1             ; Copy number to d1
+00001870  83FC 000A               1059              DIVS.W  #10, D1            ; Divide d1 by 10
+00001874  3401                    1060              MOVE.W  D1, D2             ; Move quotient to d2
+00001876  4241                    1061              CLR.W   D1                 ; Clear d1 for remainder
+00001878  4841                    1062              SWAP    D1                 ; Swap words in d1
+0000187A  0601 0030               1063              ADD.B   #48, D1            ; Convert remainder to ascii digit
+0000187E  10C1                    1064              MOVE.B  D1, (A0)+          ; Store ascii digit into string and increment a0
+00001880  B43C 0000               1065              CMP.B   #0, D2             ; Compare quotient with 0
+00001884  66E8                    1066              BNE     CONVERT            ; Branch if quotient is not zero
+00001886  10BC 0000               1067              MOVE.B  #0, (A0)           ; Null-terminate string
+0000188A                          1068  
+0000188A  204A                    1069              MOVEA.L A2, A0             ; Return to start of string in a0
+0000188C  4EB9 00001898           1070              JSR     INVERT_STRING      ; Invert the string
+00001892                          1071                            
+00001892  4C9F 0707               1072              MOVEM.W (A7)+, D0-D2/A0-A2  ; Restore registers
+00001896  4E75                    1073              RTS                      ; Return from subroutine
+00001898                          1074  
+00001898                          1075  ;---------------------------------------------------------------------------------------------
+00001898                          1076  INVERT_STRING
+00001898                          1077  ; INVERTS A STRING
+00001898                          1078  ; INPUT    : A0 pointer to zero-terminated string (the original string)
+00001898                          1079  ;          : A1 pointer to zero-terminated string (destination for inverted string)
+00001898                          1080  ; OUTPUT   : New inverted string in memory
+00001898                          1081  ; MODIFIES : NONE (aside of output)
+00001898                          1082  ;---------------------------------------------------------------------------------------------
+00001898  48E7 FFC0               1083              MOVEM.L D0-D7/A0-A1, -(A7)   ; Save registers
+0000189C  1618                    1084  LOOP        MOVE.B  (A0)+, D3         ; Load character from original string into d3
+0000189E  5205                    1085              ADDQ.B  #1, D5             ; Increment length counter in d5
+000018A0  B63C 0000               1086              CMP.B   #0, D3             ; Compare d3 with 0 (null terminator)
+000018A4  66F6                    1087              BNE     LOOP              ; Branch if not end of string
+000018A6  5505                    1088              SUBQ.B  #2, D5             ; Adjust length counter by subtracting 2
+000018A8  5348                    1089              SUBQ.W  #1, A0             ; Adjust string pointer backwards by 1
+000018AA  1820                    1090  SECOND      MOVE.B  -(A0), D4         ; Load character from end of string into d4
+000018AC  12C4                    1091              MOVE.B  D4, (A1)+         ; Store character into inverted string and increment a1
+000018AE  51CD FFFA               1092              DBRA    D5, SECOND         ; Decrement d5 and branch if not done
+000018B2  12FC 0000               1093              MOVE.B  #0, (A1)+         ; Null-terminate inverted string
+000018B6  4CDF 03FF               1094              MOVEM.L (A7)+, D0-D7/A0-A1 ; Restore registers
+000018BA  4E75                    1095              RTS                      ; Return from subroutine
+000018BA  4E75                    1096  -------------------- end include --------------------
+000018BC                          1097              INCLUDE "INSTRUCTIONS.X68"  ; Include instructions for gameplay
+000018BC                          1098  ; -------------------------------------------------------------------------------------------
+000018BC                          1099  ; INSTRUCTIONS SCREEN
+000018BC                          1100  ; Handles the instructions screen, providing gameplay details to the player. Displays
+000018BC                          1101  ; the goal, controls, and motivation for playing the game.
+000018BC                          1102  ; -------------------------------------------------------------------------------------------
+000018BC                          1103  
+000018BC                          1104  ; -------------------------------------------------------------------------------------------
+000018BC                          1105  INSINIT
+000018BC                          1106  ; INSTRUCTIONS SCREEN INIT
+000018BC                          1107  ; INPUT     : NONE
+000018BC                          1108  ; OUTPUT    : NONE
+000018BC                          1109  ; MODIFIES  : NONE
+000018BC                          1110  ; DESCRIPTION: Placeholder subroutine for initializing the instructions screen.
+000018BC                          1111  ;              Currently, no initialization is required.
+000018BC                          1112  ; -------------------------------------------------------------------------------------------
+000018BC                          1113  
+000018BC  4E75                    1114              RTS                         ; Return from subroutine
+000018BE                          1115  
+000018BE                          1116  ; -------------------------------------------------------------------------------------------
+000018BE                          1117  INSUPD
+000018BE                          1118  ; INSTRUCTIONS SCREEN UPDATE
+000018BE                          1119  ; INPUT     : NONE
+000018BE                          1120  ; OUTPUT    : NONE
+000018BE                          1121  ; MODIFIES  : NONE
+000018BE                          1122  ; DESCRIPTION: Checks for player input (pressing the "Space Bar"). If detected,
+000018BE                          1123  ;              transitions the state to the next stage of the game.
+000018BE                          1124  ; -------------------------------------------------------------------------------------------
+000018BE                          1125  
+000018BE  0839 0007 0000234B      1126          BTST.B  #7,(KBDEDGE)           ; Check if space bar is pressed
+000018C6  6700 000A               1127          BEQ     .CONT                  ; If not pressed, continue checking
+000018CA  33FC 0002 00002348      1128          MOVE.W  #2,(STANEXT)           ; Set next state to 2
+000018D2                          1129  
+000018D2                          1130  .CONT   
+000018D2  4E75                    1131          RTS                         ; Return from subroutine
+000018D4                          1132  
+000018D4                          1133  ; -------------------------------------------------------------------------------------------
+000018D4                          1134  INSPLOT
+000018D4                          1135  ; INSTRUCTIONS SCREEN PLOT
+000018D4                          1136  ; INPUT     : NONE
+000018D4                          1137  ; OUTPUT    : NONE
+000018D4                          1138  ; MODIFIES  : NONE
+000018D4                          1139  ; DESCRIPTION: Renders the instructions screen by sequentially displaying the lines
+000018D4                          1140  ;              of instructional text stored in `.TXTLST`.
+000018D4                          1141  ; -------------------------------------------------------------------------------------------
+000018D4                          1142  
+000018D4  48E7 F8C0               1143          MOVEM.L D0-D4/A0-A1, -(A7)    ; Save registers d0-d4 and a0-a1 on stack
+000018D8                          1144  
+000018D8                          1145          ; Set contour color
+000018D8  103C 0050               1146              MOVE.B  #80,D0           ; Set code for pen color
+000018DC  223C 00FFFFFF           1147              MOVE.L  #$00FFFFFF,D1     ; Load white color constant into d1
+000018E2  4E4F                    1148              TRAP    #15               ; Set pen color
+000018E4                          1149              
+000018E4                          1150              ; Define rectangle coordinates
+000018E4  323C 006B               1151              MOVE.W  #BCKPOSX-BCKWIDTH/3,D1 ; Calculate left coordinate for rectangle
+000018E8  363C 0215               1152              MOVE.W  #BCKPOSX+BCKWIDTH/3,D3 ; Calculate right coordinate for rectangle
+000018EC                          1153              
+000018EC  343C 0052               1154              MOVE.W  #82,D2           ; Set rectangle highest point (y coordinate)
+000018F0  383C 01E0               1155              MOVE.W  #BCKHEIGH,D4     ; Set rectangle lowest point (y coordinate)
+000018F4  9842                    1156              SUB.W  D2,D4             ; Compute height of rectangle   
+000018F6                          1157              
+000018F6                          1158              ; Draw rectangle
+000018F6  103C 0057               1159              MOVE.B  #87,D0           ; Set code for drawing rectangle
+000018FA  4E4F                    1160              TRAP    #15               ; Draw rectangle
+000018FC                          1161  
+000018FC  103C 0008               1162          MOVE.B  #8, D0               ; Initialize row position for printing text
+00001900  43F9 00001C4C           1163          LEA     .TXTLST, A1         ; Load address of text list into a1
+00001906                          1164  
+00001906  2219                    1165  .LOOP   MOVE.L  (A1)+, D1           ; Load address of the next string into d1
+00001908  6700 000A               1166          BEQ     .FINISHED           ; If null, exit loop
+0000190C  2041                    1167          MOVE.L  D1, A0              ; Set string address into a0
+0000190E  4EB8 1814               1168          JSR     UTLPRINT            ; Call UTLPRINT to render the text
+00001912  60F2                    1169          BRA     .LOOP               ; Repeat for next line
+00001914                          1170  
+00001914                          1171  .FINISHED 
+00001914  0839 0004 0000234D      1172          BTST.B #4, (SCRCYCCT)        ; Check display cycle (16 cycles 0, 16 cycles 1)
+0000191C  6700 0010               1173          BEQ     .DONE               ; If bit equals 0, do not draw prompt
+00001920                          1174                                      ; If bit equals 1, draw prompt
+00001920                          1175          
+00001920                          1176          ; Print the "Press SpaceBar To Continue" prompt
+00001920  41F9 00001C31           1177          LEA     .TXT18, A0          ; Load address of prompt text into a0
+00001926  103C 001C               1178          MOVE.B  #28, D0             ; Set row position for the prompt
+0000192A                          1179  
+0000192A  4EB8 1814               1180          JSR     UTLPRINT            ; Render the prompt text
+0000192E                          1181  
+0000192E  4CDF 031F               1182  .DONE       MOVEM.L (A7)+, D0-D4/A0-A1 ; Restore registers d0-d4 and a0-a1 from stack
+00001932                          1183  
+00001932  4E75                    1184          RTS                         ; Return from subroutine
+00001934                          1185  
+00001934                          1186  ; -------------------------------------------------------------------------------------------
+00001934                          1187  ; TEXT STRINGS FOR INSTRUCTIONS SCREEN
+00001934                          1188  ; Contains lines of instructional text, null-terminated. The list is referenced
+00001934                          1189  ; by the `.TXTLST` table.
+00001934                          1190  ; -------------------------------------------------------------------------------------------
+00001934                          1191  
+00001934= 59 4F 55 52 20 46 ...   1192  .TXT1     DC.B    'YOUR FELLOW FARMER HAS ASIGNED YOU A TASK,',0   ; Guide text
+0000195F= 54 48 45 20 54 41 ...   1193  .TXT2     DC.B    'THE TASK CONSISTS IN HUNTING DUCKS', 0
+00001982= 54 48 45 20 52 45 ...   1194  .TXT3     DC.B    'THE REASON IS DUE TO THE DAMAGE THEY DO TO THE CROPS',0 
+000019B7= 2D 2D 2D 2D 2D 2D ...   1195  .TXT4     DC.B    '----------------------------------------------------',0
+000019EC= 54 4F 20 44 4F 20 ...   1196  .TXT5     DC.B    'TO DO SO, YOU HAVE BEEN GIFTED A GUN AND 7 BULLETS', 0
+00001A1F= 49 4E 20 4F 52 44 ...   1197  .TXT6     DC.B    'IN ORDER TO SHOOT, YOU MUST USE "LEFT CLICK"', 0 
+00001A4C= 2D 2D 2D 2D 2D 2D ...   1198  .TXT7     DC.B    '----------------------------------------------------',0   ; Guide text
+00001A81= 45 41 43 48 20 54 ...   1199  .TXT8     DC.B    'EACH TIME A DUCK IS SHOT, A NEW ROUND STARTS', 0       ; Guide text
+00001AAE= 57 49 54 48 20 45 ...   1200  .TXT9     DC.B    'WITH EVERY ROUND THE DUCKS GET FASTER', 0            ; Guide text
+00001AD4= 41 4E 44 20 54 48 ...   1201  .TXT10    DC.B    'AND THEREFORE THE GAME BECOMES HARDER', 0
+00001AFA= 2D 2D 2D 2D 2D 2D ...   1202  .TXT11    DC.B    '----------------------------------------------------',0
+00001B2F= 45 56 45 52 59 20 ...   1203  .TXT12    DC.B    'EVERY DUCK YOU SHOOT GIVES YOU A TOTAL OF 100 POINTS',0
+00001B64= 59 4F 55 52 20 4F ...   1204  .TXT13    DC.B    'YOUR OBJECTIVE IS TO BEAT THE PREVIOUS HIGH SCORE', 0
+00001B96= 45 41 43 48 20 54 ...   1205  .TXT14    DC.B    'EACH TIME YOU HIT A DUCK YOUR GUN RELOADS FULLY',0
+00001BC6= 49 46 20 59 4F 55 ...   1206  .TXT15    DC.B    'IF YOU END UP WITH 0 BULLETS THE GAME ENDS', 0
+00001BF1= 2D 2D 2D 2D 2D 2D ...   1207  .TXT16    DC.B    '----------------------------------------------------',0
+00001C26= 47 4F 4F 44 20 4C ...   1208  .TXT17    DC.B    'GOOD LUCK!', 0 
+00001C31= 50 72 65 73 73 20 ...   1209  .TXT18    DC.B    'Press SpaceBar To Continue', 0
+00001C4C                          1210            DS.W    0
+00001C4C= 00001934 0000195F ...   1211  .TXTLST  DC.L    .TXT1,.TXT2,.TXT3,.TXT4,.TXT5,.TXT6,.TXT7,.TXT8,.TXT9,.TXT10, .TXT11, .TXT12, .TXT13, .TXT14, .TXT15, .TXT16, .TXT17, 0
+00001C4C= 00001934 0000195F ...   1212  -------------------- end include --------------------
+00001C94                          1213              INCLUDE "INTRO.X68"         ; Include introduction screen utilities
+00001C94                          1214  ; -------------------------------------------------------------------------------------------
+00001C94                          1215  ; INTRODUCTION SCREEN
+00001C94                          1216  ; Manages the game's introductory screen, displaying the title and a prompt for
+00001C94                          1217  ; the player to start the game by pressing the "Space Bar."
+00001C94                          1218  ; -------------------------------------------------------------------------------------------
+00001C94                          1219  
+00001C94                          1220  ; -------------------------------------------------------------------------------------------
+00001C94                          1221  INTROINIT
+00001C94                          1222  ; INTRODUCTION SCREEN INIT
+00001C94                          1223  ; INPUT     : NONE
+00001C94                          1224  ; OUTPUT    : NONE
+00001C94                          1225  ; MODIFIES  : NONE
+00001C94                          1226  ; DESCRIPTION: Placeholder subroutine for initializing the introduction screen.
+00001C94                          1227  ;              Currently, no initialization is required.
+00001C94                          1228  ; -------------------------------------------------------------------------------------------
+00001C94                          1229  
+00001C94  4E75                    1230              RTS                         ; Return from subroutine
+00001C96                          1231  
+00001C96                          1232  ; -------------------------------------------------------------------------------------------
+00001C96                          1233  INTROUPD
+00001C96                          1234  ; INTRODUCTION SCREEN UPDATE
+00001C96                          1235  ; INPUT     : NONE
+00001C96                          1236  ; OUTPUT    : NONE
+00001C96                          1237  ; MODIFIES  : NONE
+00001C96                          1238  ; DESCRIPTION: Checks for player input (pressing the "Space Bar"). If detected, 
+00001C96                          1239  ;              transitions the state to the next stage of the game.
+00001C96                          1240  ; -------------------------------------------------------------------------------------------
+00001C96                          1241  
+00001C96  0839 0007 0000234B      1242          BTST.B  #7, (KBDEDGE)         ; Test bit #7 in keyboard edge register
+00001C9E  6700 000A               1243          BEQ     .CONT                 ; If space bar not pressed, continue without change
+00001CA2  33FC 0001 00002348      1244          MOVE.W  #1, (STANEXT)         ; If space bar pressed, set next state to 1
+00001CAA                          1245  
+00001CAA                          1246  .CONT   
+00001CAA  4E75                    1247          RTS                         ; Return from subroutine
+00001CAC                          1248  
+00001CAC                          1249  ; -------------------------------------------------------------------------------------------
+00001CAC                          1250  INTROPLOT
+00001CAC                          1251  ; INTRODUCTION SCREEN PLOT
+00001CAC                          1252  ; INPUT     : NONE
+00001CAC                          1253  ; OUTPUT    : NONE
+00001CAC                          1254  ; MODIFIES  : NONE
+00001CAC                          1255  ; DESCRIPTION: Renders the introduction screen by displaying the game title and 
+00001CAC                          1256  ;              the prompt to press "Space Bar" to start.
+00001CAC                          1257  ; -------------------------------------------------------------------------------------------
+00001CAC                          1258  
+00001CAC  48E7 C080               1259          MOVEM.L D0-D1/A0, -(A7)       ; Save registers d0, d1, and a0 on stack
+00001CB0                          1260  
+00001CB0  4281                    1261          CLR.L   D1                    ; Clear d1 for a clean state
+00001CB2  103C 0051               1262          MOVE.B  #81, D0               ; Load code for setting background color
+00001CB6  4E4F                    1263          TRAP    #15                   ; Execute system call
+00001CB8                          1264  
+00001CB8                          1265          ; Print the game title
+00001CB8                          1266          
+00001CB8  41F9 00001CE6           1267          LEA     .TXT1, A0             ; Load address of game title into a0
+00001CBE  103C 0005               1268          MOVE.B  #5, D0                ; Set row position for title
+00001CC2  4EB8 1814               1269          JSR     UTLPRINT              ; Call uTLPRINT to render text
+00001CC6                          1270  
+00001CC6  0839 0004 0000234D      1271          BTST.B  #4, (SCRCYCCT)         ; Check display cycle bit
+00001CCE  6700 0010               1272          BEQ     .DONE                 ; If bit equals 0, skip prompt
+00001CD2                          1273  
+00001CD2                          1274          ; Print the "Press Space Bar to Start" prompt
+00001CD2                          1275          
+00001CD2  41F9 00001CF9           1276          LEA     .TXT2, A0             ; Load address of prompt text into a0
+00001CD8  103C 0014               1277          MOVE.B  #20, D0               ; Set row position for prompt
+00001CDC  4EB8 1814               1278          JSR     UTLPRINT              ; Call uTLPRINT to render text
+00001CE0                          1279  
+00001CE0  4CDF 0103               1280  .DONE   MOVEM.L (A7)+, D0-D1/A0      ; Restore registers d0, d1, and a0 from stack
+00001CE4                          1281  
+00001CE4  4E75                    1282          RTS                         ; Return from subroutine
+00001CE6                          1283  
+00001CE6                          1284  ; -------------------------------------------------------------------------------------------
+00001CE6                          1285  ; TEXT STRINGS FOR INTRODUCTION SCREEN
+00001CE6                          1286  ; These strings are null-terminated and represent the title and prompt text.
+00001CE6                          1287  ; -------------------------------------------------------------------------------------------
+00001CE6= 41 53 53 45 4D 42 ...   1288  .TXT1   DC.B    'ASSEMBLY DUCK HUNT', 0          ; Title text for the introduction screen
+00001CF9= 50 72 65 73 73 20 ...   1289  .TXT2   DC.B    'Press SpaceBar To Start', 0     ; Prompt text to start the game
+00001D12                          1290          DS.W    0                                ; Reserve space for additional text if needed
+00001D12                          1291  -------------------- end include --------------------
+00001D12                          1292              INCLUDE "OVER.X68"          ; Include game over screen utilities
+00001D12                          1293  ; -------------------------------------------------------------------------------------------
+00001D12                          1294  ; GAME OVER SCREEN
+00001D12                          1295  ; Handles the game over state, including updating (sound playback) and plotting 
+00001D12                          1296  ; the game over screen text.
+00001D12                          1297  ; -------------------------------------------------------------------------------------------
+00001D12                          1298  
+00001D12                          1299  ; -------------------------------------------------------------------------------------------
+00001D12                          1300  OVERINIT
+00001D12                          1301  ; GAME OVER SCREEN INIT
+00001D12                          1302  ; INPUT     : NONE
+00001D12                          1303  ; OUTPUT    : NONE
+00001D12                          1304  ; MODIFIES  : NONE
+00001D12                          1305  ; DESCRIPTION: Plays the "game over" sound effect.
+00001D12                          1306  ; -------------------------------------------------------------------------------------------
+00001D12                          1307  
+00001D12  4E75                    1308          RTS                         ; Return from subroutine
+00001D14                          1309  
+00001D14                          1310  ; -------------------------------------------------------------------------------------------
+00001D14                          1311  OVERUPD
+00001D14                          1312  ; GAME OVER SCREEN UPDATE
+00001D14                          1313  ; INPUT     : NONE
+00001D14                          1314  ; OUTPUT    : NONE
+00001D14                          1315  ; MODIFIES  : NONE
+00001D14                          1316  ; DESCRIPTION: Plays the "game over" sound effect.
+00001D14                          1317  ; -------------------------------------------------------------------------------------------
+00001D14                          1318  
+00001D14  1E3C 0002               1319          MOVE.B  #SNDLOSE, D7        ; Load the game over sound identifier into d7
+00001D18  4E42                    1320          TRAP    #SNDPLTN            ; Trigger the sound playback system call
+00001D1A                          1321  
+00001D1A  4E75                    1322          RTS                         ; Return from subroutine
+00001D1C                          1323  
+00001D1C                          1324  ; -------------------------------------------------------------------------------------------
+00001D1C                          1325  OVERPLOT
+00001D1C                          1326  ; GAME OVER SCREEN PLOT
+00001D1C                          1327  ; INPUT     : NONE
+00001D1C                          1328  ; OUTPUT    : NONE
+00001D1C                          1329  ; MODIFIES  : NONE
+00001D1C                          1330  ; DESCRIPTION: Displays the "Game Over" screen, showing text such as "GAME OVER," 
+00001D1C                          1331  ;              "YOUR SCORE," and "HIGHEST SCORE" on specific rows.
+00001D1C                          1332  ; -------------------------------------------------------------------------------------------
+00001D1C                          1333  
+00001D1C  48E7 C0C0               1334          MOVEM.L D0-D1/A0-A1, -(A7)  ; Save d0, d1, and a0 registers on stack
+00001D20                          1335  
+00001D20  4281                    1336          CLR.L   D1                  ; Clear d1 for clean use
+00001D22  103C 0051               1337          MOVE.B  #81, D0             ; Set code for clearing the screen in d0
+00001D26  4E4F                    1338          TRAP    #15                 ; Clear the screen using the system call
+00001D28                          1339              
+00001D28  41F9 00001DA6           1340          LEA     .TXT1, A0           ; Load the address of "GAME OVER" text into a0
+00001D2E  103C 0005               1341          MOVE.B  #5, D0              ; Set row position to 5 for the first line of text
+00001D32  4EB8 1814               1342          JSR     UTLPRINT            ; Call utlprint to display the text
+00001D36                          1343  
+00001D36                          1344          ; Print first line (Score)
+00001D36  43F9 00001DB0           1345          LEA     .TXT2, A1           ; Load the address of "YOUR SCORE:" text into a1
+00001D3C  323C 2014               1346          MOVE.W  #$2014, D1          ; Set parameters for printing score text
+00001D40  103C 000B               1347          MOVE.B  #11, D0             ; Set row position for score display
+00001D44  4E4F                    1348          TRAP    #15                 ; Display the text
+00001D46  4281                    1349          CLR.L   D1                  ; Clear d1 to prepare for appending score value
+00001D48  3239 00002332           1350          MOVE.W  (SCOPNT), D1        ; Load the current score into d1
+00001D4E  103C 0011               1351          MOVE.B  #17, D0             ; Set code for printing text with score value
+00001D52  4E4F                    1352          TRAP    #15                 ; Print "YOUR SCORE: [value]"
+00001D54                          1353  
+00001D54  43F9 00001DBD           1354          LEA     .TXT3, A1           ; Load the address of "HIGHEST SCORE:" text into a0
+00001D5A  323C 2016               1355          MOVE.W  #$2016, D1          ; Set parameters for printing high score text
+00001D5E  103C 000B               1356          MOVE.B  #11, D0             ; Set row position for high score display
+00001D62  4E4F                    1357          TRAP    #15                 ; Display the text
+00001D64  4281                    1358          CLR.L   D1                  ; Clear d1 to prepare for number conversion
+00001D66  4280                    1359          CLR.L   D0                  ; Clear d0 for a clean state
+00001D68  4282                    1360          CLR.L   D2                  ; Clear d2 for a clean state
+00001D6A  4EB9 00001F96           1361          JSR     FILEREADER          ; Read high score from file
+00001D70  41F8 101E               1362          LEA     BUFFER, A0          ; Load buffer address into a0
+00001D74                          1363              
+00001D74  4EB8 1846               1364          JSR     CONVSTRING_TO_NUMBER ; Convert string to number
+00001D78  2202                    1365          MOVE.L  D2, D1              ; Store converted high score in d1
+00001D7A  103C 0011               1366          MOVE.B  #17, D0             ; Set code for printing text with high score
+00001D7E  4E4F                    1367          TRAP    #15                 ; Print "HIGHEST SCORE: [value]"
+00001D80                          1368               
+00001D80                          1369          ; Compare current score with high score and update if necessary
+00001D80  3239 00002332           1370          MOVE.W  (SCOPNT), D1        ; Load current score into d1
+00001D86  B441                    1371          CMP.W   D1, D2              ; Compare current score with high score
+00001D88  6400 0016               1372          BHS     .DONE               ; If current score is less or equal, skip update
+00001D8C  3001                    1373          MOVE    D1, D0             ; Move current score into d0 for conversion
+00001D8E  41F8 1040               1374          LEA     INVSCS, A0          ; Load address for inverted score string into a0
+00001D92  43F8 101E               1375          LEA     BUFFER, A1          ; Load buffer address into a1
+00001D96  4EB8 1866               1376          JSR     CONVNUMBER_TO_STRING ; Convert current score to string
+00001D9A  4EB9 00001FBE           1377          JSR     FILEWRITER          ; Write new high score to file
+00001DA0                          1378  
+00001DA0  4CDF 0303               1379  .DONE   MOVEM.L (A7)+, D0-D1/A0-A1 ; Restore d0, d1, and a0 registers from stack
+00001DA4                          1380  
+00001DA4  4E75                    1381          RTS                         ; Return from subroutine
+00001DA6                          1382  
+00001DA6                          1383  ; -------------------------------------------------------------------------------------------
+00001DA6                          1384  ; TEXT STRINGS FOR GAME OVER SCREEN
+00001DA6                          1385  ; -------------------------------------------------------------------------------------------
+00001DA6= 47 41 4D 45 20 4F ...   1386  .TXT1   DC.B    'GAME OVER', 0          ; "GAME OVER" string (null-terminated)
+00001DB0= 59 4F 55 52 20 53 ...   1387  .TXT2   DC.B    'YOUR SCORE: ', 0       ; "YOUR SCORE:" string (null-terminated)
+00001DBD= 48 49 47 48 45 53 ...   1388  .TXT3   DC.B    'HIGHEST SCORE: ', 0    ; "HIGHEST SCORE:" string (null-terminated)
+00001DCE                          1389          DS.W    0                     ; Reserve space for additional text if needed
+00001DCE                          1390  -------------------- end include --------------------
+00001DCE                          1391              INCLUDE "STATES.X68"        ; Include game state management utilities
+00001DCE                          1392  ; ==============================================================================
+00001DCE                          1393  ; GAME STATE MANAGEMENT
+00001DCE                          1394  ; ==============================================================================
+00001DCE                          1395  
+00001DCE                          1396  ; -----------------------------------------------------------------------------
+00001DCE                          1397  STAINIT
+00001DCE                          1398  ; INITIALIZES THE STATE MANAGER
+00001DCE                          1399  ; INPUT    : NONE
+00001DCE                          1400  ; OUTPUT   : NONE
+00001DCE                          1401  ; MODIFIES : NONE
+00001DCE                          1402  ; -----------------------------------------------------------------------------
+00001DCE  33FC FFFF 00002346      1403              MOVE.W  #STANONE,(STACUR)       ; Set current state to STANONE
+00001DD6  4279 00002348           1404              CLR.W   (STANEXT)              ; Clear next state
+00001DDC  4E75                    1405              RTS                         ; Return from subroutine
+00001DDE                          1406  
+00001DDE                          1407  ; -----------------------------------------------------------------------------
+00001DDE                          1408  STAUPD
+00001DDE                          1409  ; PERFORMS STATE UPDATE AND INITIALIZATION IF NECESSARY
+00001DDE                          1410  ; INPUT    : NONE
+00001DDE                          1411  ; OUTPUT   : NONE
+00001DDE                          1412  ; MODIFIES : NONE
+00001DDE                          1413  ; -----------------------------------------------------------------------------
+00001DDE  48E7 8080               1414              MOVEM.L D0/A0,-(A7)            ; Save registers d0 and a0 to stack
+00001DE2                          1415  
+00001DE2  4280                    1416              CLR.L   D0                     ; Clear d0
+00001DE4  3039 00002348           1417              MOVE.W  (STANEXT),D0           ; Load next state into d0
+00001DEA  B079 00002346           1418              CMP.W   (STACUR),D0            ; Compare current state with next state
+00001DF0  6700 0012               1419              BEQ     .DOUPD                 ; If equal, skip initialization
+00001DF4                          1420  
+00001DF4  33C0 00002346           1421              MOVE.W  D0,(STACUR)            ; Update current state to next state
+00001DFA  E588                    1422              LSL.L   #2,D0                  ; Multiply state value by 4 (word offset for lookup)
+00001DFC  2040                    1423              MOVE.L  D0,A0                  ; Load address offset into a0
+00001DFE  2068 1E1C               1424              MOVE.L  .INITBL(A0),A0         ; Get corresponding init routine from INITBL
+00001E02                          1425  
+00001E02  4E90                    1426              JSR     (A0)                   ; Jump to the initialization routine
+00001E04                          1427  
+00001E04  4280                    1428  .DOUPD      CLR.L   D0                     ; Clear d0
+00001E06  3039 00002346           1429              MOVE.W  (STACUR),D0            ; Load current state into d0
+00001E0C  E588                    1430              LSL.L   #2,D0                  ; Multiply state value by 4 (word offset for lookup)
+00001E0E  2040                    1431              MOVE.L  D0,A0                  ; Load address offset into a0
+00001E10  2068 1E2C               1432              MOVE.L  .UPDTBL(A0),A0         ; Get corresponding update routine from UPDTBL
+00001E14                          1433  
+00001E14  4E90                    1434              JSR     (A0)                   ; Jump to the update routine
+00001E16                          1435  
+00001E16  4CDF 0101               1436              MOVEM.L (A7)+,D0/A0            ; Restore registers d0 and a0 from stack
+00001E1A                          1437  
+00001E1A  4E75                    1438              RTS                         ; Return from subroutine
+00001E1C                          1439  
+00001E1C= 00001C94 000018BC ...   1440  .INITBL     DC.L    INTROINIT,INSINIT,GAMINIT,OVERINIT ; State initialization routines
+00001E2C= 00001C96 000018BE ...   1441  .UPDTBL     DC.L    INTROUPD,INSUPD,GAMUPD,OVERUPD     ; State update routines
+00001E3C                          1442  
+00001E3C                          1443  ; -----------------------------------------------------------------------------
+00001E3C                          1444  STAPLOT
+00001E3C                          1445  ; PERFORMS STATE PLOT
+00001E3C                          1446  ; INPUT    : NONE
+00001E3C                          1447  ; OUTPUT   : NONE
+00001E3C                          1448  ; MODIFIES : NONE
+00001E3C                          1449  ; -----------------------------------------------------------------------------
+00001E3C  48E7 8080               1450              MOVEM.L D0/A0,-(A7)            ; Save registers d0 and a0 to stack
+00001E40                          1451  
+00001E40  4280                    1452              CLR.L   D0                     ; Clear d0
+00001E42  3039 00002346           1453              MOVE.W  (STACUR),D0            ; Load current state into d0
+00001E48  E588                    1454              LSL.L   #2,D0                  ; Multiply state value by 4 (word offset for lookup)
+00001E4A  2040                    1455              MOVE.L  D0,A0                  ; Load address offset into a0
+00001E4C  2068 1E58               1456              MOVE.L  .PLTTBL(A0),A0         ; Get corresponding plot routine from PLTTBL
+00001E50                          1457  
+00001E50  4E90                    1458              JSR     (A0)                   ; Jump to the plot routine
+00001E52                          1459  
+00001E52  4CDF 0101               1460              MOVEM.L (A7)+,D0/A0            ; Restore registers d0 and a0 from stack
+00001E56                          1461  
+00001E56  4E75                    1462              RTS                         ; Return from subroutine
+00001E58                          1463  
+00001E58= 00001CAC 000018D4 ...   1464  .PLTTBL     DC.L    INTROPLOT,INSPLOT,GAMPLOT,OVERPLOT ; State plot routines
+00001E68                          1465  
+00001E68                          1466  ; -----------------------------------------------------------------------------
+00001E68                          1467  STAEMPTY
+00001E68                          1468  ; EMPTY SUBROUTINE FOR CASES WITH NOTHING TO DO
+00001E68                          1469  ; INPUT    : NONE
+00001E68                          1470  ; OUTPUT   : NONE
+00001E68                          1471  ; MODIFIES : NONE
+00001E68                          1472  ; NOTE     : JUST A PLACEHOLDER. NOTHING TO DO.
+00001E68                          1473  ; -----------------------------------------------------------------------------
+00001E68  4E75                    1474              RTS                         ; Return from subroutine
+00001E6A                          1475  
+00001E6A                          1476  ; -----------------------------------------------------------------------------
+00001E6A                          1477  GAMINIT
+00001E6A                          1478  ; INITIALIZES THE GAMEPLAY STATE
+00001E6A                          1479  ; INPUT    : NONE
+00001E6A                          1480  ; OUTPUT   : NONE
+00001E6A                          1481  ; MODIFIES : NONE
+00001E6A                          1482  ; -----------------------------------------------------------------------------
+00001E6A  4EB8 12EE               1483              JSR     DCKINIT                ; Initialize duck logic
+00001E6E  4EB8 15B6               1484              JSR     SCOINIT                ; Initialize score system
+00001E72  4EB8 11C8               1485              JSR     RNDINIT                ; Initialize random number generator
+00001E76  4EB8 107C               1486              JSR     SNDINIT                ; Initialize sound system  
+00001E7A  4E75                    1487              RTS                         ; Return from subroutine
+00001E7C                          1488  
+00001E7C                          1489  ; -----------------------------------------------------------------------------
+00001E7C                          1490  GAMUPD
+00001E7C                          1491  ; UPDATES THE GAMEPLAY STATE
+00001E7C                          1492  ; INPUT    : NONE
+00001E7C                          1493  ; OUTPUT   : NONE
+00001E7C                          1494  ; MODIFIES : NONE
+00001E7C                          1495  ; -----------------------------------------------------------------------------
+00001E7C  4EB8 13B8               1496              JSR     DCKUPD                 ; Update duck logic
+00001E80  4EB8 1654               1497              JSR     CURSORUPD              ; Update cursor logic
+00001E84  4E75                    1498              RTS                         ; Return from subroutine
+00001E86                          1499  
+00001E86                          1500  ; -----------------------------------------------------------------------------
+00001E86                          1501  GAMPLOT
+00001E86                          1502  ; RENDERS THE GAMEPLAY STATE
+00001E86                          1503  ; INPUT    : NONE
+00001E86                          1504  ; OUTPUT   : NONE
+00001E86                          1505  ; MODIFIES : NONE
+00001E86                          1506  ; -----------------------------------------------------------------------------
+00001E86  4EB8 1558               1507              JSR     BCKPLOT                ; Plot background
+00001E8A  4EB8 15D0               1508              JSR     SCOPLOT                ; Plot score
+00001E8E  4EB8 14B6               1509              JSR     DCKPLOT                ; Plot duck
+00001E92  4EB8 1774               1510              JSR     CURSORPLOT             ; Plot cursor
+00001E96  4E75                    1511              RTS                         ; Return from subroutine
+00001E96  4E75                    1512  -------------------- end include --------------------
+00001E98                          1513              INCLUDE "SPRITES.X68"       ; Include images management utilities
+00001E98                          1514  ; ==============================================================================
+00001E98                          1515  ; SPRITE MANAGEMENT ROUTINES
+00001E98                          1516  ; ==============================================================================
+00001E98                          1517  
+00001E98                          1518  ; ------------------------------------------------------------------------------
+00001E98                          1519  SPRINIT
+00001E98                          1520  ; DESCRIPTION: Loads a 16x16 sprite from a file into memory.
+00001E98                          1521  ; INPUTS:   A1 - Pointer to the file name
+00001E98                          1522  ;           A2 - Target memory location to store the sprite
+00001E98                          1523  ; OUTPUTS:  None
+00001E98                          1524  ; ------------------------------------------------------------------------------
+00001E98  48E7 E060               1525              MOVEM.L D0-D2/A1-A2,-(A7)  ; Save registers
+00001E9C  103C 0032               1526              MOVE.B  #50,D0             ; Set code to close all open files
+00001EA0  4E4F                    1527              TRAP    #15                ; Execute file close
+00001EA2  103C 0033               1528              MOVE.B  #51,D0             ; Set code to open the specified file
+00001EA6  4E4F                    1529              TRAP    #15                ; Open file; file id stored in D1.L
+00001EA8  740A                    1530              MOVE.L  #10,D2             ; Set file position to 10
+00001EAA  103C 0037               1531              MOVE.B  #55,D0             ; Set code to initiate file read
+00001EAE  4E4F                    1532              TRAP    #15                ; Perform file seek
+00001EB0  43F9 00002344           1533              LEA     FILE_POS,A1        ; Load FILE_POS address into A1
+00001EB6  7401                    1534              MOVE.L  #1,D2              ; Set byte count to 1
+00001EB8  103C 0035               1535              MOVE.B  #53,D0             ; Set code for read operation
+00001EBC  4E4F                    1536              TRAP    #15                ; Retrieve file start position
+00001EBE  1439 00002344           1537              MOVE.B  (FILE_POS),D2      ; Load file start position value into D2
+00001EC4  103C 0037               1538              MOVE.B  #55,D0             ; Set code to read file data
+00001EC8  4E4F                    1539              TRAP    #15                ; Read file data
+00001ECA  224A                    1540              MOVE.L  A2,A1              ; Set target memory location (A1 = A2)
+00001ECC  243C 00000300           1541              MOVE.L  #$300,D2           ; Set byte count to 768 (16x16 pixels)
+00001ED2  103C 0035               1542              MOVE.B  #53,D0             ; Set code for data read
+00001ED6  4E4F                    1543              TRAP    #15                ; Read sprite data into memory
+00001ED8  103C 0032               1544              MOVE.B  #50,D0             ; Set code to close the file
+00001EDC  4E4F                    1545              TRAP    #15                ; Execute file close
+00001EDE  4CDF 0607               1546              MOVEM.L (A7)+,D0-D2/A1-A2  ; Restore registers
+00001EE2  4E75                    1547              RTS                       ; Return from subroutine
+00001EE4                          1548  
+00001EE4                          1549  ; ------------------------------------------------------------------------------
+00001EE4                          1550  PRINTSPR
+00001EE4                          1551  ; DESCRIPTION: Draws a 16x16 sprite on the screen, rescaled according to RSCLFCTR.
+00001EE4                          1552  ; INPUTS:   A1 - Pointer to the sprite image
+00001EE4                          1553  ;           D3.W - X coordinate
+00001EE4                          1554  ;           D4.W - Y coordinate
+00001EE4                          1555  ; OUTPUTS:  None
+00001EE4                          1556  ; ------------------------------------------------------------------------------
+00001EE4  48E7 FF40               1557              MOVEM.L D0-D7/A1,-(A7)     ; Save registers
+00001EE8  4EB9 00001F88           1558              JSR     PRINTINIT           ; Initialize drawing parameters
+00001EEE                          1559  
+00001EEE  7E0F                    1560  .YLOOP      MOVE.L  #15,D7            ; Set x loop counter to 15
+00001EF0  3605                    1561              MOVE.W  D5,D3             ; Reset x position from saved value
+00001EF2                          1562  
+00001EF2  1219                    1563  .XLOOP      MOVE.B  (A1)+,D1          ; Read blue component from sprite data
+00001EF4  E189                    1564              LSL.L   #8,D1             ; Shift blue component into position
+00001EF6  1219                    1565              MOVE.B  (A1)+,D1          ; Read green component from sprite data
+00001EF8  E189                    1566              LSL.L   #8,D1             ; Shift green component into position
+00001EFA  1219                    1567              MOVE.B  (A1)+,D1          ; Read red component from sprite data
+00001EFC  103C 0050               1568              MOVE.B  #80,D0            ; Set code for setting pen color
+00001F00  4E4F                    1569              TRAP    #15               ; Execute system call to set pen color
+00001F02  103C 0051               1570              MOVE.B  #81,D0            ; Set code for setting fill color
+00001F06  4E4F                    1571              TRAP    #15               ; Execute system call to set fill color
+00001F08  B27C FF00               1572              CMP     #$0000FF00,D1     ; Compare color with green value
+00001F0C  6700 0014               1573              BEQ     .SKIPCLR          ; If color is green, skip drawing
+00001F10  3203                    1574              MOVE.W  D3,D1             ; Save current x position in d1
+00001F12  3404                    1575              MOVE.W  D4,D2             ; Save current y position in d2
+00001F14  5843                    1576              ADDQ.W  #RSCLFCTR,D3      ; Increment x coordinate by scaling factor
+00001F16  5844                    1577              ADDQ.W  #RSCLFCTR,D4      ; Increment y coordinate by scaling factor
+00001F18  103C 0057               1578              MOVE.B  #87,D0            ; Set code to draw filled square
+00001F1C  4E4F                    1579              TRAP    #15               ; Execute drawing operation
+00001F1E  3601                    1580              MOVE.W  D1,D3             ; Restore original x position from d1
+00001F20  3802                    1581              MOVE.W  D2,D4             ; Restore original y position from d2
+00001F22                          1582  
+00001F22  5843                    1583  .SKIPCLR    ADDQ.W  #RSCLFCTR,D3      ; Increment x coordinate by scaling factor
+00001F24  4281                    1584              CLR.L   D1                ; Clear d1
+00001F26  51CF FFCA               1585              DBRA    D7,.XLOOP         ; Decrement loop counter and branch if not done
+00001F2A  5944                    1586              SUBQ.W  #RSCLFCTR,D4      ; Decrement y coordinate by scaling factor
+00001F2C  51CE FFC0               1587              DBRA    D6,.YLOOP         ; Decrement y loop counter and branch if not done
+00001F30  4CDF 02FF               1588              MOVEM.L (A7)+,D0-D7/A1     ; Restore registers
+00001F34  4E75                    1589              RTS                       ; Return from subroutine
+00001F36                          1590  
+00001F36                          1591  ; ------------------------------------------------------------------------------
+00001F36                          1592  INVERSPR
+00001F36                          1593  ; DESCRIPTION: Draws an inverted 16x16 sprite on the screen.
+00001F36                          1594  ; INPUTS:   A1 - Pointer to the sprite image
+00001F36                          1595  ;           D3.W - X coordinate
+00001F36                          1596  ;           D4.W - Y coordinate
+00001F36                          1597  ; OUTPUTS:  None
+00001F36                          1598  ; ------------------------------------------------------------------------------
+00001F36  48E7 FF40               1599              MOVEM.L D0-D7/A1,-(A7)     ; Save registers
+00001F3A  4EB9 00001F88           1600              JSR     PRINTINIT           ; Initialize drawing parameters
+00001F40                          1601  
+00001F40  7E0F                    1602  .YLOOP      MOVE.L  #15,D7            ; Set x loop counter to 15
+00001F42  3605                    1603              MOVE.W  D5,D3             ; Reset x coordinate from saved value
+00001F44                          1604  
+00001F44  1219                    1605  .XLOOP      MOVE.B  (A1)+,D1          ; Read blue component from sprite data
+00001F46  E189                    1606              LSL.L   #8,D1             ; Shift blue component into position
+00001F48  1219                    1607              MOVE.B  (A1)+,D1          ; Read green component from sprite data
+00001F4A  E189                    1608              LSL.L   #8,D1             ; Shift green component into position
+00001F4C  1219                    1609              MOVE.B  (A1)+,D1          ; Read red component from sprite data
+00001F4E  103C 0050               1610              MOVE.B  #80,D0            ; Set code for setting pen color
+00001F52  4E4F                    1611              TRAP    #15               ; Execute system call to set pen color
+00001F54  103C 0051               1612              MOVE.B  #81,D0            ; Set code for setting fill color
+00001F58  4E4F                    1613              TRAP    #15               ; Execute system call to set fill color
+00001F5A  B27C FF00               1614              CMP     #$0000FF00,D1     ; Compare color with green value
+00001F5E  6700 0014               1615              BEQ     .SKIPCLR          ; If color is green, skip drawing
+00001F62  3203                    1616              MOVE.W  D3,D1             ; Save current x coordinate in d1
+00001F64  3404                    1617              MOVE.W  D4,D2             ; Save current y coordinate in d2
+00001F66  5943                    1618              SUBQ.W  #RSCLFCTR,D3      ; Decrement x coordinate by scaling factor
+00001F68  5944                    1619              SUBQ.W  #RSCLFCTR,D4      ; Decrement y coordinate by scaling factor
+00001F6A  103C 0057               1620              MOVE.B  #87,D0            ; Set code to draw filled square
+00001F6E  4E4F                    1621              TRAP    #15               ; Execute drawing operation
+00001F70  3601                    1622              MOVE.W  D1,D3             ; Restore original x coordinate from d1
+00001F72  3802                    1623              MOVE.W  D2,D4             ; Restore original y coordinate from d2
+00001F74                          1624  
+00001F74  5943                    1625  .SKIPCLR    SUBQ.W  #RSCLFCTR,D3      ; Decrement x coordinate by scaling factor
+00001F76  4281                    1626              CLR.L   D1                ; Clear d1
+00001F78  51CF FFCA               1627              DBRA    D7,.XLOOP         ; Decrement loop counter and branch if not done
+00001F7C  5944                    1628              SUBQ.W  #RSCLFCTR,D4      ; Decrement y coordinate by scaling factor
+00001F7E  51CE FFC0               1629              DBRA    D6,.YLOOP         ; Decrement y loop counter and branch if not done
+00001F82  4CDF 02FF               1630              MOVEM.L (A7)+,D0-D7/A1     ; Restore registers
+00001F86  4E75                    1631              RTS                       ; Return from subroutine
+00001F88                          1632  
+00001F88                          1633  ; ------------------------------------------------------------------------------
+00001F88                          1634  PRINTINIT
+00001F88                          1635  ; DESCRIPTION: Sets up parameters for sprite drawing.
+00001F88                          1636  ; ------------------------------------------------------------------------------
+00001F88  4281                    1637              CLR.L   D1                ; Clear d1
+00001F8A  0643 0010               1638              ADD.W   #16,D3            ; Adjust starting x coordinate
+00001F8E  5344                    1639              SUBQ.W  #1,D4             ; Adjust starting y coordinate
+00001F90  3A03                    1640              MOVE.W  D3,D5             ; Save initial x coordinate in d5
+00001F92  7C0F                    1641              MOVE.L  #15,D6            ; Set y loop counter in d6
+00001F94  4E75                    1642              RTS                       ; Return from subroutine
+00001F94  4E75                    1643  -------------------- end include --------------------
+00001F96                          1644              INCLUDE "FILEOPERATOR.X68"  ; Include file management
+00001F96                          1645  ; ==============================================================================
+00001F96                          1646  ; FILE MANAGEMENT
+00001F96                          1647  ; ==============================================================================
+00001F96                          1648  
+00001F96                          1649  ;-------------------------------------------------------------------------------
+00001F96                          1650  FILEREADER
+00001F96                          1651  ; OPENS AN EXISTING FILE TO READ IT
+00001F96                          1652  ; INPUT    : (A1) Contains the null terminated file name
+00001F96                          1653  ;            D1.L Contains the file ID (FID)
+00001F96                          1654  ;            D2.L Contains the number of bytes to read
+00001F96                          1655  ; OUTPUT   : D2.L Contains the real amount of bytes that have been read, counting from 0.
+00001F96                          1656  ; MODIFIES : NONE 
+00001F96                          1657  ;-------------------------------------------------------------------------------
+00001F96                          1658  
+00001F96  48E7 C0C0               1659         MOVEM.L D0-D1/A0-A1, -(A7)       ; Save registers
+00001F9A  43F8 1032               1660          LEA FILENM, A1                  ; Load file name address into A1
+00001F9E  103C 0033               1661          MOVE.B #51, D0                  ; Set code to open file for reading
+00001FA2  4E4F                    1662          TRAP #15                        ; System call for file open
+00001FA4                          1663          
+00001FA4                          1664         ; D1.L file ID
+00001FA4                          1665  
+00001FA4  43F8 101E               1666          LEA BUFFER, A1                  ; Load buffer address into A1
+00001FA8  7464                    1667          MOVE.L #100, D2                 ; Set number of bytes to read
+00001FAA  103C 0035               1668          MOVE.B #53, D0                  ; Set code to read file
+00001FAE  4E4F                    1669          TRAP #15                        ; System call for file read
+00001FB0                          1670  
+00001FB0                          1671          ; D2.L contains the number of bytes actually read (including 0)
+00001FB0  5302                    1672          SUBQ.B #1, D2                   ; Decrement by 1
+00001FB2                          1673  
+00001FB2                          1674          ; Close file
+00001FB2  103C 0038               1675          MOVE.B #56, D0                  ; Set code to close file
+00001FB6  4E4F                    1676          TRAP #15                        ; System call for file close
+00001FB8                          1677  
+00001FB8  4CDF 0303               1678          MOVEM.L (A7)+, D0-D1/A0-A1      ; Restore registers
+00001FBC                          1679  
+00001FBC  4E75                    1680          RTS                             ; Return from subroutine
+00001FBE                          1681  
+00001FBE                          1682  ;-------------------------------------------------------------------------------
+00001FBE                          1683  FILEWRITER
+00001FBE                          1684  ; OPENS AN EXISTING FILE TO WRITE IN IT
+00001FBE                          1685  ; INPUT    : (A1) Contains the null terminated file name
+00001FBE                          1686  ;            D1.L Contains the file ID (FID)
+00001FBE                          1687  ;            D2.L Contains the number of bytes to write
+00001FBE                          1688  ; OUTPUT   : NONE
+00001FBE                          1689  ; MODIFIES : NONE 
+00001FBE                          1690  ;-------------------------------------------------------------------------------
+00001FBE                          1691  
+00001FBE  48E7 E0C0               1692          MOVEM.L D0-D2/A0-A1, -(A7)      ; Save registers
+00001FC2                          1693  
+00001FC2  43F8 1032               1694          LEA FILENM, A1                  ; Load file name address into A1
+00001FC6  103C 0034               1695          MOVE.B #52, D0                  ; Set code to open file for writing
+00001FCA  4E4F                    1696          TRAP #15                        ; System call for file open
+00001FCC                          1697  
+00001FCC                          1698         ; D1.L file ID
+00001FCC                          1699  
+00001FCC  43F8 101E               1700          LEA BUFFER, A1                  ; Load buffer address into A1
+00001FD0  7464                    1701          MOVE.L #100, D2                 ; Set number of bytes to write
+00001FD2  103C 0036               1702          MOVE.B #54, D0                  ; Set code to write to file
+00001FD6  4E4F                    1703          TRAP #15                        ; System call for file write
+00001FD8                          1704  
+00001FD8                          1705          ; Close file
+00001FD8  103C 0038               1706          MOVE.B #56, D0                  ; Set code to close file
+00001FDC  4E4F                    1707          TRAP #15                        ; System call for file close
+00001FDE                          1708  
+00001FDE  4CDF 0307               1709          MOVEM.L (A7)+, D0-D2/A0-A1      ; Restore registers
+00001FE2                          1710  
+00001FE2  4E75                    1711          RTS                             ; Return from subroutine
+00001FE2  4E75                    1712  -------------------- end include --------------------
+00001FE4                          1713  
+00001FE4                          1714  START
+00001FE4                          1715  
+00001FE4                          1716  ; --- INITIALIZATION -----------------------------------------------------------
+00001FE4                          1717               
+00001FE4  007C 0700               1718              ORI.W   #$0700,SR           ; Disable interrupts by setting interrupt mask in the status register
+00001FE8  4EB8 1048               1719              JSR     SYSINIT             ; Call system initialization routine
+00001FEC  4EB8 1DCE               1720              JSR     STAINIT             ; Call state initialization routine
+00001FF0                          1721             
+00001FF0                          1722  .LOOP
+00001FF0                          1723  
+00001FF0                          1724  ; --- UPDATE -------------------------------------------------------------------
+00001FF0                          1725  
+00001FF0                          1726  ; READ INPUT DEVICES
+00001FF0  4E41                    1727              TRAP    #KBDUPTN            ; Check input from keyboard or input device
+00001FF2                          1728  
+00001FF2                          1729  ; --- SYNC ---------------------------------------------------------------------
+00001FF2                          1730  
+00001FF2  4A39 0000234C           1731  .WINT       TST.B   (SCRINTCT)          ; Test if the screen interrupt counter is zero
+00001FF8  67F8                    1732              BEQ     .WINT               ; Wait here if it's not yet time to update (synchronize game loop)
+00001FFA  4239 0000234C           1733              CLR.B   (SCRINTCT)          ; Clear the screen interrupt counter to reset sync
+00002000                          1734  
+00002000                          1735  ; UPDATE GAME LOGIC
+00002000  4EB8 1DDE               1736              JSR     STAUPD              ; Update game state (e.g., position of ducks, score, etc.)
+00002004                          1737  
+00002004                          1738  ; --- PLOT ---------------------------------------------------------------------
+00002004  4EB8 1E3C               1739              JSR     STAPLOT             ; Plot graphics (update visual representation of game state)
+00002008  4E40                    1740              TRAP    #SCRUPTN            ; Trigger screen update to display changes (double buffering)
+0000200A  60E4                    1741              BRA     .LOOP               ; Branch to start of the game loop (infinite loop)
+0000200C                          1742  
+0000200C  FFFF FFFF               1743              SIMHALT                     ; Simulation halt (end of program execution)
+00002010                          1744              
+00002010                          1745              INCLUDE "VARS.X68"          ; Include variables specific to the game
+00002010                          1746  ; ==============================================================================
+00002010                          1747  ; GAME VARIABLES
+00002010                          1748  ; ==============================================================================
+00002010                          1749  
+00002010                          1750  ; --- DUCK RELATED VARIABLES ---------------------------------------------------
+00002010                          1751  DCKPOSX     DS.W    1                       ; Duck x coordinate
+00002012                          1752  DCKPOSY     DS.W    1                       ; Duck y coordinate
+00002014                          1753  DCKVELX     DS.W    1                       ; Duck x velocity
+00002016                          1754  DCKVELY     DS.W    1                       ; Duck y velocity
+00002018                          1755  DCKVLSX     DS.W    1                       ; Duck support velocity (x)
+0000201A                          1756  DCKVLSY     DS.W    1                       ; Duck support velocity (y)
+0000201C                          1757  
+0000201C                          1758  DCKDIR      DS.B    1                       ; Duck direction
+0000201D                          1759  
+0000201E                          1760  DCKVLI      DS.W    1                       ; Duck increment velocity
+00002020                          1761  
+00002020                          1762  DCKSPR      DS.B    768                     ; Duck BMP sprite size
+00002320                          1763              DS.W    0
+00002320                          1764  
+00002320                          1765  ; --- CURSOR RELATED VARIABLES -------------------------------------------------
+00002320                          1766  MOUSEX      DS.W    1                       ; Mouse x coordinate
+00002322                          1767  MOUSEY      DS.W    1                       ; Mouse y coordinate
+00002324                          1768  PREV_STATE  DS.B    1                       ; Previous mouse state
+00002325                          1769  
+00002326                          1770  MSCLICK_X   DS.W    1                       ; Mouse click x coordinate
+00002328                          1771  MSCLICK_Y   DS.W    1                       ; Mouse click y coordinate
+0000232A                          1772  
+0000232A                          1773  ; --- VERTICAL RECTANGLE -------------------------------------------------------
+0000232A                          1774  RVTPOSX     DS.W    1                       ; Vertical rectangle x coordinate
+0000232C                          1775  RVTPOSY     DS.W    1                       ; Vertical rectangle y coordinate
+0000232E                          1776  
+0000232E                          1777  ; --- HORIZONTAL RECTANGLE -----------------------------------------------------
+0000232E                          1778  RHZPOSX     DS.W    1                       ; Horizontal rectangle x coordinate
+00002330                          1779  RHZPOSY     DS.W    1                       ; Horizontal rectangle y coordinate
+00002332                          1780  
+00002332                          1781  ; --- SCOREBOARD RELATED VARIABLES ---------------------------------------------
+00002332                          1782  SCOPNT      DS.W    1                       ; Number of points (score)
+00002334                          1783  SCOBUL      DS.W    1                       ; Number of bullets
+00002336                          1784  SCORND      DS.W    1                       ; Number of rounds
+00002338                          1785  
+00002338                          1786  ; --- RANDOM RELATED VARIABLES -------------------------------------------------
+00002338                          1787  RNDINDEX    DS.B    1                       ; Random index
+0000233A                          1788              DS.W    0
+0000233A                          1789  
+0000233A                          1790  ; --- HITBOX RELATED VARIABLES -------------------------------------------------
+0000233A                          1791  BOX_XMIN    DS.W    1                       ; Hitbox minimum x
+0000233C                          1792  BOX_XMAX    DS.W    1                       ; Hitbox maximum x
+0000233E                          1793  BOX_YMIN    DS.W    1                       ; Hitbox minimum y
+00002340                          1794  BOX_YMAX    DS.W    1                       ; Hitbox maximum y
+00002342                          1795  
+00002342                          1796  ; --- AUDIO RELATED VARIABLES --------------------------------------------------
+00002342                          1797  AUDACCSN    DS.B    1                       ; Accept new sounds flag
+00002344                          1798              DS.W    0
+00002344                          1799  
+00002344                          1800  ; --- SPRITES RELATED VARIABLES ------------------------------------------------
+00002344                          1801  FILE_POS    DS.B    1                       ; Sprite file position
+00002346                          1802              DS.W    0
+00002346                          1803  
+00002346                          1804  ; --- STATE RELATED VARIABLES --------------------------------------------------
+00002346                          1805  STACUR      DS.W    1                       ; Current state
+00002348                          1806  STANEXT     DS.W    1                       ; Next state
+00002348                          1807  -------------------- end include --------------------
+0000234A                          1808              INCLUDE "SYSVARS.X68"       ; Include system variables
+0000234A                          1809  ; ==============================================================================
+0000234A                          1810  ; SYSTEM VARIABLES
+0000234A                          1811  ; ==============================================================================
+0000234A                          1812  
+0000234A                          1813  ; --- KEYBOARD RELATED VARIABLES -----------------------------------------------
+0000234A                          1814  
+0000234A                          1815  KBDVAL      DS.B    1                       ; Key State
+0000234B                          1816  KBDEDGE     DS.B    1                       ; Key Edge
+0000234C                          1817  
+0000234C                          1818  ; --- TIMER INTERRUPT RELATED VARIABLES ----------------------------------------
+0000234C                          1819  
+0000234C                          1820  SCRINTCT    DS.B    1                       ; Interrupt counter
+0000234D                          1821  SCRCYCCT    DS.B    1                       ; Cycle counter
+0000234E                          1822              DS.W    0
+0000234E                          1823  -------------------- end include --------------------
+0000234E                          1824  
+0000234E                          1825              END     START               ; End of program; define the entry point as "START"
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+AUDACCSN            2342
+BCKFCOL             FFAD63
+BCKHEIGH            1E0
+BCKPCOL             FFAD63
+BCKPLOT             1558
+BCKPOSX             140
+BCKPOSY             F0
+BCKWIDTH            280
+BINITVEC            1000
+BOXHEIGH            1E
+BOXPCOL             FF1100
+BOXWIDTH            1E
+BOX_XMAX            233C
+BOX_XMIN            233A
+BOX_YMAX            2340
+BOX_YMIN            233E
+BUFFER              101E
+BULLETN             7
+BUTTON_RELEASED     1754
+BVECVELX            100E
+BVECVELY            1015
+CONVERT             186E
+CONVNUMBER_TO_STRING  1866
+CONVSTRING_TO_NUMBER  1846
+CONVSTRING_TO_NUMBER:DONE  185E
+CONVSTRING_TO_NUMBER:LOOP  184A
+CURSORPLOT          1774
+CURSORUPD           1654
+CURSORUPD:ADD_SCORE  172E
+CURSORUPD:MAYOR_XMIN  16F2
+CURSORUPD:MAYOR_YMIN  1706
+CURSORUPD:MENOR_YMAX  171A
+DCKDIR              201C
+DCKFCOL             AAAAAA
+DCKINIT             12EE
+DCKINIT:DCKFILE     1358
+DCKPCOL             0
+DCKPLOT             14B6
+DCKPLOT:CONT        14F4
+DCKPLOT:DCKRGT      14EE
+DCKPOSX             2010
+DCKPOSY             2012
+DCKRAD              1E
+DCKRSPW             1368
+DCKSPEED            2
+DCKSPR              2020
+DCKUPD              13B8
+DCKUPD:CHKVERT      13E6
+DCKUPD:COLBOT       1436
+DCKUPD:COLLFT       1418
+DCKUPD:COLRGT       13FA
+DCKUPD:COLTOP       144A
+DCKUPD:DONE         14A4
+DCKUPD:MULTVEL      145E
+DCKVELX             2014
+DCKVELY             2016
+DCKVLI              201E
+DCKVLSX             2018
+DCKVLSY             201A
+DONE                176E
+FILENM              1032
+FILEREADER          1F96
+FILEWRITER          1FBE
+FILE_POS            2344
+GAMINIT             1E6A
+GAMPLOT             1E86
+GAMUPD              1E7C
+GRSFCOL             D78D
+GRSHEIGH            50
+GRSPCOL             D78D
+GRSPOSX             0
+GRSPOSY             190
+GRSWIDTH            280
+INSINIT             18BC
+INSPLOT             18D4
+INSPLOT:DONE        192E
+INSPLOT:FINISHED    1914
+INSPLOT:LOOP        1906
+INSPLOT:TXT1        1934
+INSPLOT:TXT10       1AD4
+INSPLOT:TXT11       1AFA
+INSPLOT:TXT12       1B2F
+INSPLOT:TXT13       1B64
+INSPLOT:TXT14       1B96
+INSPLOT:TXT15       1BC6
+INSPLOT:TXT16       1BF1
+INSPLOT:TXT17       1C26
+INSPLOT:TXT18       1C31
+INSPLOT:TXT2        195F
+INSPLOT:TXT3        1982
+INSPLOT:TXT4        19B7
+INSPLOT:TXT5        19EC
+INSPLOT:TXT6        1A1F
+INSPLOT:TXT7        1A4C
+INSPLOT:TXT8        1A81
+INSPLOT:TXT9        1AAE
+INSPLOT:TXTLST      1C4C
+INSUPD              18BE
+INSUPD:CONT         18D2
+INTROINIT           1C94
+INTROPLOT           1CAC
+INTROPLOT:DONE      1CE0
+INTROPLOT:TXT1      1CE6
+INTROPLOT:TXT2      1CF9
+INTROUPD            1C96
+INTROUPD:CONT       1CAA
+INVERSPR            1F36
+INVERSPR:SKIPCLR    1F74
+INVERSPR:XLOOP      1F44
+INVERSPR:YLOOP      1F40
+INVERT_STRING       1898
+INVSCS              1040
+KBDA                41
+KBDD                44
+KBDE                45
+KBDEDGE             234B
+KBDINIT             116C
+KBDQ                51
+KBDS                53
+KBDSHOOT            50
+KBDSTART            20
+KBDUPD              117A
+KBDUPD:LOOP         11BE
+KBDUPD:PACK         11BA
+KBDUPTN             1
+KBDVAL              234A
+KBDW                57
+LOOP                189C
+MOUSEX              2320
+MOUSEY              2322
+MSCLICK_X           2326
+MSCLICK_Y           2328
+OVERINIT            1D12
+OVERPLOT            1D1C
+OVERPLOT:DONE       1DA0
+OVERPLOT:TXT1       1DA6
+OVERPLOT:TXT2       1DB0
+OVERPLOT:TXT3       1DBD
+OVERUPD             1D14
+PLYFCOL             6565FF
+PLYHEIGH            14
+PLYPCOL             4444FF
+PLYPOSX             140
+PLYPOSY             101C
+PLYWIDTH            14
+PREV_STATE          2324
+PRINTINIT           1F88
+PRINTSPR            1EE4
+PRINTSPR:SKIPCLR    1F22
+PRINTSPR:XLOOP      1EF2
+PRINTSPR:YLOOP      1EEE
+RESET_COORDS        173C
+RHZFCOL             FF
+RHZHEIGH            5
+RHZPCOL             FF
+RHZPOSX             232E
+RHZPOSY             2330
+RHZWIDTH            1E
+RNDGET              11D0
+RNDGET:CONTINUE     11E4
+RNDGET:RANDVEC      11EE
+RNDINDEX            2338
+RNDINIT             11C8
+ROUINIT             17F2
+RSCLFCTR            4
+RVTFCOL             FF
+RVTHEIGH            1E
+RVTPCOL             FF
+RVTPOSX             232A
+RVTPOSY             232C
+RVTWIDTH            5
+SCOBUL              2334
+SCOFCOL             0
+SCOINIT             15B6
+SCOLINE1            3E1D
+SCOLINE2            91D
+SCOLINE3            231D
+SCOPLOT             15D0
+SCOPLOT:TXT1        163C
+SCOPLOT:TXT2        1643
+SCOPLOT:TXT3        164C
+SCOPNT              2332
+SCORND              2336
+SCRCYCCT            234D
+SCRFPS              3C
+SCRHEIGH            1E0
+SCRINIT             1100
+SCRINTCT            234C
+SCRINTN             1
+SCRPLOT             1144
+SCRTIM              115E
+SCRUPTN             0
+SCRWIDTH            280
+SCSTR               1044
+SECOND              18AA
+SNDINIT             107C
+SNDINIT:DONE        109A
+SNDINIT:LOOP        1088
+SNDINIT:SNDLIST     10DE
+SNDINIT:SNDLOSE     10CA
+SNDINIT:SNDQUAK     10A0
+SNDINIT:SNDSHOT     10B4
+SNDLOSE             2
+SNDPLAY             10EE
+SNDPLTN             2
+SNDQUAK             0
+SNDSHOT             1
+SPRINIT             1E98
+STACUR              2346
+STAEMPTY            1E68
+STAINIT             1DCE
+STANEXT             2348
+STANONE             FFFFFFFF
+STAPLOT             1E3C
+STAPLOT:PLTTBL      1E58
+START               1FE4
+START:LOOP          1FF0
+START:WINT          1FF2
+STAUPD              1DDE
+STAUPD:DOUPD        1E04
+STAUPD:INITBL       1E1C
+STAUPD:UPDTBL       1E2C
+SYSINIT             1048
+ULTCHRWD            8
+UTLPRINT            1814
+UTLPRINT:ENDLOOP    1826
+UTLPRINT:LOOP       181C
