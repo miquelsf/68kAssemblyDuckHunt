@@ -2,8 +2,6 @@
 
 <img src="assets/GameScreenshoot.webp" alt="Game Screenshoot" width="448" height="336">
 
-
-> .[!NOTE].
 > **68k Assembly Duck Hunt** is an unofficial game, very slightly inspired by Nintendo's classic **Duck Hunt** game. This project is developed solely for educational purposes and is not affiliated with or endorsed by Nintendo in any way.
 
 ## Table of Contents
